@@ -2,8 +2,8 @@ using OpenAI
 using Test
 
 @testset "OpenAI.jl" begin
-  # printstyled(color=:blue, "\n")
-  # @testset "" begin
-  #   include(".jl");sleep(1)
-  # end
+  printstyled(color=:blue, "\n")
+  @testset "engines" begin
+    include("engines.jl")
+  end
 end
