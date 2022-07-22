@@ -11,15 +11,15 @@ struct OpenAIResponse
 end
 
 """
-List engines
+List models
 
-https://beta.openai.com/docs/api-reference/engines/list
+https://beta.openai.com/docs/api-reference/models/list
 
 # Arguments:
 - `api_key::String`: OpenAI API key
 """
-function list_engines(api_key::String)
-  url = BASE_URL_v1*"/engines"
+function list_models(api_key::String)
+  url = BASE_URL_v1*"/models"
   request_headers = Dict(
     "Authorization" => "Bearer "*api_key,
     "Content-Type" => "application/json",
@@ -34,16 +34,16 @@ function list_engines(api_key::String)
 end
 
 """
-Retrieve engine
+Retrieve model
 
-https://beta.openai.com/docs/api-reference/engines/retrieve
+https://beta.openai.com/docs/api-reference/models/retrieve
 
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `engine_id::String`: Engine id
 """
-function retrieve_engine(api_key::String, engine_id::String)
-  url = BASE_URL_v1*"/engines/"*engine_id
+function retrieve_model(api_key::String, engine_id::String)
+  url = BASE_URL_v1*"/models/"*engine_id
   request_headers = Dict(
     "Authorization" => "Bearer "*api_key,
     "Content-Type" => "application/json",
@@ -58,7 +58,7 @@ function retrieve_engine(api_key::String, engine_id::String)
 end
 
 export OpenAIResponse
-export list_engines
-export retrieve_engine
+export list_models
+export retrieve_model
 
 end # module

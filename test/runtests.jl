@@ -3,7 +3,7 @@ using Test
 
 @testset "OpenAI.jl" begin
   printstyled(color=:blue, "\n")
-  @testset "engines" begin
-    include("engines.jl")
+  @testset "models" begin
+    include("models.jl")
   end
 end
