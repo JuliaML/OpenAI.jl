@@ -1,4 +1,4 @@
-# OpanAI API wrapper for Julia
+# OpenAI API wrapper for Julia
 
 ## Overview
 
