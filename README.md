@@ -10,6 +10,6 @@ Provides a wrapper to the OpenAI API.
 
 See tests for example usage.
 
-## Feature Requests
+## Feature requests
 
 Feel free to open a PR, or file an issue if that's out of reach!

@@ -40,10 +40,10 @@ https://beta.openai.com/docs/api-reference/models/retrieve
 
 # Arguments:
 - `api_key::String`: OpenAI API key
-- `engine_id::String`: Engine id
+- `model_id::String`: Model id
 """
-function retrieve_model(api_key::String, engine_id::String)
-  url = BASE_URL_v1*"/models/"*engine_id
+function retrieve_model(api_key::String, model_id::String)
+  url = BASE_URL_v1*"/models/"*model_id
   request_headers = Dict(
     "Authorization" => "Bearer "*api_key,
     "Content-Type" => "application/json",
@@ -52,6 +52,34 @@ function retrieve_model(api_key::String, engine_id::String)
     "GET",
     url,
     request_headers;
+    retry = false
+  )
+  return OpenAIResponse(response.status, JSON.parse(String(response.body)))
+end
+
+"""
+Create completion
+
+https://beta.openai.com/docs/api-reference/completions
+
+# Arguments:
+- `api_key::String`: OpenAI API key
+- `model_id::String`: Model id
+"""
+function create_completion(api_key::String, model_id::String)
+  url = BASE_URL_v1*"/completions"
+  request_headers = Dict(
+    "Authorization" => "Bearer "*api_key,
+    "Content-Type" => "application/json",
+  )
+  params = Dict(
+    "model" => model_id
+  )
+  response = HTTP.request(
+    "POST",
+    url,
+    request_headers,
+    JSON.json(params);
     retry = false
   )
   return OpenAIResponse(response.status, JSON.parse(String(response.body)))
