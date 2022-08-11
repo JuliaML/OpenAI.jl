@@ -6,4 +6,7 @@ using Test
   @testset "models" begin
     include("models.jl")
   end
+  @testset "completion" begin
+    include("completion.jl")
+  end
 end
