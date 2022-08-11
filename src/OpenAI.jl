@@ -66,15 +66,14 @@ https://beta.openai.com/docs/api-reference/completions
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 """
-function create_completion(api_key::String, model_id::String)
+function create_completion(api_key::String, model_id::String; kwargs...)
   url = BASE_URL_v1*"/completions"
   request_headers = Dict(
     "Authorization" => "Bearer "*api_key,
     "Content-Type" => "application/json",
   )
-  params = Dict(
-    "model" => model_id
-  )
+  params = Dict(kwargs)
+  params[:model] = model_id
   response = HTTP.request(
     "POST",
     url,
@@ -88,5 +87,6 @@ end
 export OpenAIResponse
 export list_models
 export retrieve_model
+export create_completion
 
 end # module
