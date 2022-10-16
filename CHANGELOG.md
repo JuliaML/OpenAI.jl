@@ -1,3 +1,7 @@
+### 0.3.1
+
+* added GitHub Actions workflow for running tests and parameterizing secrets
+
 ### 0.3.0
 
 * adding completions

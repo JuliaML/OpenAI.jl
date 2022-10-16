@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "*" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Julia environment
+        uses: julia-actions/setup-julia@v1.8.3
+      - run: cd $GITHUB_WORKSPACE
+      - name: Run tests
+        run: julia --project=. -e "using Pkg; Pkg.instantiate(); Pkg.activate(\".\"); Pkg.test()"
