@@ -1,3 +1,7 @@
+### 0.4.0
+
+* feature: added "create edit"
+
 ### 0.3.1
 
 * added GitHub Actions workflow for running tests and parameterizing secrets
