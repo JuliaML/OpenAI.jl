@@ -1,3 +1,8 @@
+### 0.4.1
+
+* removed Manifest.toml from tracking
+* updated HTTP compat
+
 ### 0.4.0
 
 * feature: added "create edit"
