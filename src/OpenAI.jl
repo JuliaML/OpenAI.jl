@@ -1,13 +1,56 @@
 module OpenAI
 
-using HTTP
-using JSON
+using Downloads
+using JSON3
 
-const BASE_URL_v1="https://api.openai.com/v1"
+const BASE_URL_v1 = "https://api.openai.com/v1"
 
-struct OpenAIResponse
-  status
-  response
+function build_params(kwargs)
+    isempty(kwargs) && return nothing
+    buf = IOBuffer()
+    write(buf, '{')
+    for (i, (k, v)) in enumerate(kwargs)
+        write(buf, '"', k, '"', ':')
+        if isnothing(v)
+            write(buf, "null")
+        else
+            write(buf, repr(v))
+        end
+        i == length(kwargs) || write(buf, ',')
+    end
+    write(buf, '}')
+    seekstart(buf)
+    return buf
+end
+auth_header(api_key) = ["Authorization" => "Bearer $api_key", "Content-Type" => "application/json"]
+
+function request_body(url; kwargs...)
+    resp = nothing
+    body = sprint() do output
+        resp = request(url; output=output, kwargs...)
+    end
+    return resp, body
+end
+
+function status_error(resp, log=nothing)
+    logs = !isnothing(log) ? ": $log" : ""
+    error("request status $(resp.message)$logs")
+end
+
+function openai_request(api, api_key; method, kwargs...)
+    global BASE_URL_v1
+    params = build_params(kwargs)
+    resp, body = request_body("$(BASE_URL_v1)/$(api)"; method, input = params, headers = auth_header(api_key))
+    if resp.status >= 400
+        status_error(resp, body)
+    else
+        return OpenAIResponse(resp.status, JSON3.read(body))
+    end
+end
+
+struct OpenAIResponse{R}
+    status::Int
+    response::R
 end
 
 """
@@ -19,18 +62,7 @@ https://beta.openai.com/docs/api-reference/models/list
 - `api_key::String`: OpenAI API key
 """
 function list_models(api_key::String)
-  url = BASE_URL_v1*"/models"
-  request_headers = Dict(
-    "Authorization" => "Bearer "*api_key,
-    "Content-Type" => "application/json",
-  )
-  response = HTTP.request(
-    "GET",
-    url,
-    request_headers;
-    retry = false
-  )
-  return OpenAIResponse(response.status, JSON.parse(String(response.body)))
+    return openai_request("models", api_key; method = "GET")
 end
 
 """
@@ -43,18 +75,7 @@ https://beta.openai.com/docs/api-reference/models/retrieve
 - `model_id::String`: Model id
 """
 function retrieve_model(api_key::String, model_id::String)
-  url = BASE_URL_v1*"/models/"*model_id
-  request_headers = Dict(
-    "Authorization" => "Bearer "*api_key,
-    "Content-Type" => "application/json",
-  )
-  response = HTTP.request(
-    "GET",
-    url,
-    request_headers;
-    retry = false
-  )
-  return OpenAIResponse(response.status, JSON.parse(String(response.body)))
+    return openai_request("models/$(model_id)", api_key; method = "GET")
 end
 
 """
@@ -67,21 +88,7 @@ https://beta.openai.com/docs/api-reference/completions
 - `model_id::String`: Model id
 """
 function create_completion(api_key::String, model_id::String; kwargs...)
-  url = BASE_URL_v1*"/completions"
-  request_headers = Dict(
-    "Authorization" => "Bearer "*api_key,
-    "Content-Type" => "application/json",
-  )
-  params = Dict(kwargs)
-  params[:model] = model_id
-  response = HTTP.request(
-    "POST",
-    url,
-    request_headers,
-    JSON.json(params);
-    retry = false
-  )
-  return OpenAIResponse(response.status, JSON.parse(String(response.body)))
+    return openai_request("completions", api_key; method = "POST", model = model_id, kwargs...)
 end
 
 """
@@ -97,22 +104,7 @@ https://beta.openai.com/docs/api-reference/edits/create
 - `n::Int` (optional): How many edits to generate for the input and instruction.
 """
 function create_edit(api_key::String, model_id::String, instruction::String; kwargs...)
-  url = BASE_URL_v1*"/edits"
-  request_headers = Dict(
-    "Authorization" => "Bearer "*api_key,
-    "Content-Type" => "application/json",
-  )
-  params = Dict(kwargs)
-  params[:model] = model_id          # Set the model param
-  params[:instruction] = instruction # Set the instruction param
-  response = HTTP.request(
-    "POST",
-    url,
-    request_headers,
-    JSON.json(params);
-    retry = false
-  )
-  return OpenAIResponse(response.status, JSON.parse(String(response.body)))
+    return openai_request("edits", api_key; method = "POST", model = model_id, instruction, kwargs...)
 end
 
 export OpenAIResponse
