@@ -1,3 +1,7 @@
+### 0.5.0
+
+* Replace HTTP/JSON with Downloads/JSON3
+
 ### 0.4.1
 
 * removed Manifest.toml from tracking
