@@ -6,7 +6,7 @@
   r = create_completion(
     ENV["OPENAI_API_KEY"], 
     r.response["data"][begin]["id"];
-    prompt = "Say this is a test"
+    prompt = "Say \"this is a test\""
   )
   println(r.response["choices"][begin]["text"])
   if !=(r.status, 200)

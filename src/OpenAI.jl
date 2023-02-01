@@ -8,17 +8,7 @@ const BASE_URL_v1 = "https://api.openai.com/v1"
 function build_params(kwargs)
     isempty(kwargs) && return nothing
     buf = IOBuffer()
-    write(buf, '{')
-    for (i, (k, v)) in enumerate(kwargs)
-        write(buf, '"', k, '"', ':')
-        if isnothing(v)
-            write(buf, "null")
-        else
-            write(buf, repr(v))
-        end
-        i == length(kwargs) || write(buf, ',')
-    end
-    write(buf, '}')
+    JSON3.write(buf, kwargs)
     seekstart(buf)
     return buf
 end
