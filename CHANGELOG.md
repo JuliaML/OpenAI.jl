@@ -1,3 +1,7 @@
+### 0.5.1
+
+* bugfix: avoid issues with quoted strings in kwargs
+
 ### 0.5.0
 
 * Replace HTTP/JSON with Downloads/JSON3
