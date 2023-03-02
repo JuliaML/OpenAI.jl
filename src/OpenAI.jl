@@ -44,6 +44,12 @@ struct OpenAIResponse{R}
 end
 
 """
+Default model ID for embeddings.
+Follows recommendation in OpenAI docs at https://platform.openai.com/docs/models/embeddings.
+"""
+const DEFAULT_EMBEDDING_MODEL_ID="text-embedding-ada-002"
+
+"""
 List models
 
 https://beta.openai.com/docs/api-reference/models/list
@@ -97,10 +103,27 @@ function create_edit(api_key::String, model_id::String, instruction::String; kwa
     return openai_request("edits", api_key; method = "POST", model = model_id, instruction, kwargs...)
 end
 
+"""
+Create embeddings
+
+https://platform.openai.com/docs/api-reference/embeddings
+
+# Arguments:
+- `api_key::String`: OpenAI API key
+- `input`: The input text to generate the embedding(s) for, as String or array of tokens.
+    To get embeddings for multiple inputs in a single request, pass an array of strings
+    or array of token arrays. Each input must not exceed 8192 tokens in length.
+- `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
+"""
+function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; kwargs...)
+    return openai_request("embeddings", api_key; method = "POST", model = model_id, input, kwargs...)
+end
+
 export OpenAIResponse
 export list_models
 export retrieve_model
 export create_completion
 export create_edit
+export create_embeddings
 
 end # module
