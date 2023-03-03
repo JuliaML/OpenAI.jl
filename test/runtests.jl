@@ -9,4 +9,7 @@ using Test
   @testset "completion" begin
     include("completion.jl")
   end
+  @testset "embeddings" begin
+    include("embeddings.jl")
+  end
 end
