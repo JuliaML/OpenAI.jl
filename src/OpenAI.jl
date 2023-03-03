@@ -82,6 +82,31 @@ function create_completion(api_key::String, model_id::String; kwargs...)
 end
 
 """
+Create chat
+
+https://platform.openai.com/docs/api-reference/chat
+
+# Arguments:
+- `api_key::String`: OpenAI API key
+- `model_id::String`: Model id
+- `messages::Vector`: The chat history so far.
+
+## Example:
+
+```julia
+julia> CC = create_chat("..........", "gpt-3.5-turbo", 
+    [Dict("role" => "user", "content"=> "What is the OpenAI mission?")]
+);
+
+julia> CC.response.choices[1][:message][:content]
+"\n\nThe OpenAI mission is to create safe and beneficial artificial intelligence (AI) that can help humanity achieve its full potential. The organization aims to discover and develop technical approaches to AI that are safe and aligned with human values. OpenAI believes that AI can help to solve some of the world's most pressing problems, such as climate change, disease, inequality, and poverty. The organization is committed to advancing research and development in AI while ensuring that it is used ethically and responsibly."
+```
+"""
+function create_chat(api_key::String, model_id::String, messages; kwargs...)
+    return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, kwargs...)
+end
+
+"""
 Create edit
 
 https://beta.openai.com/docs/api-reference/edits/create
@@ -100,6 +125,7 @@ end
 export OpenAIResponse
 export list_models
 export retrieve_model
+export create_chat
 export create_completion
 export create_edit
 
