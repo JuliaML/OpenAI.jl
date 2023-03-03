@@ -1,3 +1,8 @@
+### 0.6.0
+
+* feature: add API for creating embeddings
+* feature: add chat/completion
+
 ### 0.5.1
 
 * bugfix: avoid issues with quoted strings in kwargs
