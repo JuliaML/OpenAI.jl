@@ -14,31 +14,25 @@ For API functionality see [reference documentation](https://platform.openai.com/
 
 2. Create a [secrete API key](https://platform.openai.com/account/api-keys)
 
-3. Copy and past your `secrete key`
-`secret_key = "YOUR_SECRETE_KEY_HERE"`
+3. Choose a model [model](https://platform.openai.com/docs/models) to interact with
 
-4. choose an [openapi model](https://platform.openai.com/docs/models) to interact with
-Note: gpt-3.5-turbo is recommended as it is the the cheapest chat model as of March 18, 2023
-`model = "gpt-3.5-turbo"`
+```julia
+secret_key = "YOUR_SECRETE_KEY_HERE"
+model = "gpt-3.5-turbo"
+prompt =  "Say \"this is a test\""
 
-5. Define a prompt
-`prompt =  "Say \"this is a test\""`
-
-6. Create a request
-```
 r = create_chat(
     secret_key, 
     model,
     [Dict("role" => "user", "content"=> prompt)]
   )
+println(r.response[:choices][begin][:message][:content])
 ```
 
-7. Print model response
-`println(r.response[:choices][begin][:message][:content])`
 returns
 `This is a test.`
 
-See tests for other example usage.
+For more use cases see tests.
 
 ## Feature requests
 Feel free to open a PR, or file an issue if that's out of reach!
