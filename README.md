@@ -1,6 +1,5 @@
 
 # OpenAI API wrapper for Julia
-=============
 
 ## Overview
 Provides a Julia wrapper to the OpenAI API.
@@ -10,11 +9,11 @@ For API functionality see [reference documentation](https://platform.openai.com/
 `using Pkg; Pkg.add("DataFrames")`
 
 ## Quick Start
-1. Create an [openai account](https://chat.openai.com/auth/login) if you don't already have one
+1. Create an [openai account](https://chat.openai.com/auth/login), if you don't already have one
 
 2. Create a [secrete API key](https://platform.openai.com/account/api-keys)
 
-3. Choose a model [model](https://platform.openai.com/docs/models) to interact with
+3. Choose a [model](https://platform.openai.com/docs/models) to interact with
 
 ```julia
 secret_key = "YOUR_SECRETE_KEY_HERE"
@@ -29,8 +28,7 @@ r = create_chat(
 println(r.response[:choices][begin][:message][:content])
 ```
 
-returns
-
+returns\n
 `This is a test.`
 
 
