@@ -3,7 +3,7 @@
 
 ## Overview
 Provides a Julia wrapper to the OpenAI API.
-For API functionality see [reference documentation](https://platform.openai.com/docs/api-reference)
+For API functionality see [reference documentation](https://platform.openai.com/docs/api-reference).
 
 ## Usage
 ```julia
