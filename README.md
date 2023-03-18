@@ -7,18 +7,18 @@ For API functionality see [reference documentation](https://platform.openai.com/
 
 ## Usage
 ```julia
-using Pkg; Pkg.add("DataFrames")
+using Pkg; Pkg.add("OpenAI")
 ```
 
 ## Quick Start
-1. Create an [openai account](https://chat.openai.com/auth/login), if you don't already have one
+1. Create an [OpenAI account](https://chat.openai.com/auth/login), if you don't already have one
 
 2. Create a [secrete API key](https://platform.openai.com/account/api-keys)
 
 3. Choose a [model](https://platform.openai.com/docs/models) to interact with
 
 ```julia
-secret_key = "YOUR_SECRETE_KEY_HERE"
+secret_key = "PAST_YOUR_SECRETE_KEY_HERE"
 model = "gpt-3.5-turbo"
 prompt =  "Say \"this is a test\""
 
