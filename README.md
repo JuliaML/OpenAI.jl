@@ -30,9 +30,11 @@ println(r.response[:choices][begin][:message][:content])
 ```
 
 returns
+
 `This is a test.`
 
-For more use cases see tests.
+
+For more use cases [see tests](https://github.com/rory-linehan/OpenAI.jl/tree/main/test).
 
 ## Feature requests
 Feel free to open a PR, or file an issue if that's out of reach!
