@@ -1,3 +1,9 @@
+### 0.7.0
+
+* feature: add image generation endpoint
+* add create_edit example
+* update README
+
 ### 0.6.0
 
 * feature: add API for creating embeddings
