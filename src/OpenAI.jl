@@ -144,6 +144,25 @@ function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBE
     return openai_request("embeddings", api_key; method = "POST", model = model_id, input, kwargs...)
 end
 
+"""
+Create images 
+
+https://platform.openai.com/docs/api-reference/images/create
+
+#Arguments: 
+- `api_key::String`: OpenAI API key
+- `prompt`: The input text to generate the image(s) for, as String or array of tokens.
+- `n`::Integer Optional. The number of images to generate. Must be between 1 and 10.
+- `size`::String. Optional. Defaults to 1024x1024. The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+
+# once the request is made, 
+download like this: 
+download(r.response["data"][begin]["url"], "image.png")
+"""
+function create_images(api_key::String, prompt, n::Integer=1, size::String="256x256"; kwargs...)
+    return openai_request("images/generations", api_key; method = "POST", prompt, kwargs...)
+end
+
 export OpenAIResponse
 export list_models
 export retrieve_model
@@ -151,5 +170,6 @@ export create_chat
 export create_completion
 export create_edit
 export create_embeddings
+export create_images
 
 end # module
