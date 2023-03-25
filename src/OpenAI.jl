@@ -3,7 +3,31 @@ module OpenAI
 using Downloads
 using JSON3
 
-const BASE_URL_v1 = "https://api.openai.com/v1"
+
+abstract type AbstractOpenAIProvider end
+Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
+    api_key::String = ""
+    base_url::String = "https://api.openai.com/v1" 
+    api_version::String = ""
+end
+Base.@kwdef struct AzureProvider <: AbstractOpenAIProvider
+    api_key::String = ""
+    base_url::String = "https://docs-test-001.openai.azure.com/openai/deployments/gpt-35-turbo"
+    api_version::String = "2023-03-15-preview"
+end
+
+const DEFAULT_PROVIDER = OpenAIProvider();
+
+auth_header(provider::AbstractOpenAIProvider, api_key::AbstractString) = error("auth_header not implemented for $(typeof(provider))")
+auth_header(provider::OpenAIProvider, api_key::AbstractString=provider.api_key) = ["Authorization" => "Bearer $(isempty(api_key) ? provider.api_key : api_key)", "Content-Type" => "application/json"]
+auth_header(provider::AzureProvider, api_key::AbstractString=provider.api_key) = ["api-key" => (isempty(api_key) ? provider.api_key : api_key), "Content-Type" => "application/json"]
+
+build_url(provider::AbstractOpenAIProvider, api::String) = error("build_url not implemented for $(typeof(provider))")
+build_url(provider::OpenAIProvider, api::String) = "$(provider.base_url)/$(api)"
+function build_url(provider::AzureProvider, api::String)
+    (;base_url, api_version) = provider
+    return "$(base_url)/$(api)?api-version=$(api_version)"
+end
 
 function build_params(kwargs)
     isempty(kwargs) && return nothing
@@ -12,7 +36,6 @@ function build_params(kwargs)
     seekstart(buf)
     return buf
 end
-auth_header(api_key) = ["Authorization" => "Bearer $api_key", "Content-Type" => "application/json"]
 
 function request_body(url; kwargs...)
     resp = nothing
@@ -27,15 +50,24 @@ function status_error(resp, log=nothing)
     error("request status $(resp.message)$logs")
 end
 
-function openai_request(api, api_key; method, kwargs...)
-    global BASE_URL_v1
+function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, kwargs...)
     params = build_params(kwargs)
-    resp, body = request_body("$(BASE_URL_v1)/$(api)"; method, input = params, headers = auth_header(api_key))
+    url = build_url(provider, api)
+    resp, body = request_body(url; method, input = params, headers = auth_header(provider, api_key))
     if resp.status >= 400
         status_error(resp, body)
     else
         return OpenAIResponse(resp.status, JSON3.read(body))
     end
+end
+
+function openai_request(api::AbstractString, api_key::AbstractString; method, kwargs...)
+    global DEFAULT_PROVIDER
+    _request(api, DEFAULT_PROVIDER, api_key; method, kwargs...)
+end
+
+function openai_request(api::AbstractString, provider::AbstractOpenAIProvider; method, kwargs...)
+    _request(api, provider; method, kwargs...)
 end
 
 struct OpenAIResponse{R}
@@ -110,6 +142,9 @@ julia> CC.response.choices[1][:message][:content]
 """
 function create_chat(api_key::String, model_id::String, messages; kwargs...)
     return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, kwargs...)
+end
+function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; kwargs...)
+    return openai_request("chat/completions", provider; method = "POST", model = model_id, messages=messages, kwargs...)
 end
 
 """
