@@ -46,15 +46,66 @@ function request_body(url; kwargs...)
     return resp, body
 end
 
+function request_body_live(url; method, input, headers, streamcallback, kwargs...)
+    resp = nothing
+
+    body = sprint() do output
+        resp = HTTP.open("POST", url, headers) do stream
+
+            body = String(take!(input))
+            write(stream, body)
+
+            HTTP.closewrite(stream)    # indicate we're done writing to the request
+
+            r = HTTP.startread(stream) # start reading the response
+            
+            isdone = false
+
+            while !eof(stream) || !isdone
+                chunk = String(readavailable(stream))
+
+                if endswith(strip(chunk), "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
+                    isdone = true
+                end
+
+                # call the callback (if present) on the latest chunk
+                if !isnothing(streamcallback)
+                    streamcallback(chunk)
+                end
+
+                # append the latest chunk to the body
+                print(output, chunk)
+            end
+            HTTP.closeread(stream)
+        end
+    end
+
+    println(resp)
+    println(body)
+
+    return resp, body
+end
+
 function status_error(resp, log=nothing)
     logs = !isnothing(log) ? ": $log" : ""
     error("request status $(resp.message)$logs")
 end
 
-function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, kwargs...)
+function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, streamcallback, kwargs...)
+    # add stream: True to the API call if a stream callback function is passed
+    if !isnothing(streamcallback)
+        kwargs = (kwargs..., stream=true)
+    end
+
     params = build_params(kwargs)
     url = build_url(provider, api)
-    resp, body = request_body(url; method, input = params, headers = auth_header(provider, api_key))
+    resp, body = let
+        if isnothing(streamcallback)
+            request_body(url; method, input = params, headers = auth_header(provider, api_key))
+        else
+            request_body_live(url; method, input = params, headers = auth_header(provider, api_key), streamcallback=streamcallback)
+        end
+    end
     if resp.status >= 400
         status_error(resp, body)
     else
@@ -141,11 +192,11 @@ julia> CC.response.choices[1][:message][:content]
 "\n\nThe OpenAI mission is to create safe and beneficial artificial intelligence (AI) that can help humanity achieve its full potential. The organization aims to discover and develop technical approaches to AI that are safe and aligned with human values. OpenAI believes that AI can help to solve some of the world's most pressing problems, such as climate change, disease, inequality, and poverty. The organization is committed to advancing research and development in AI while ensuring that it is used ethically and responsibly."
 ```
 """
-function create_chat(api_key::String, model_id::String, messages; kwargs...)
-    return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, kwargs...)
+function create_chat(api_key::String, model_id::String, messages, streamcallback=nothing; kwargs...)
+    return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
-function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; kwargs...)
-    return openai_request("chat/completions", provider; method = "POST", model = model_id, messages=messages, kwargs...)
+function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; streamcallback=nothing, kwargs...)
+    return openai_request("chat/completions", provider; method = "POST", model = model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
 
 """
