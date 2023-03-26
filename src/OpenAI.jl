@@ -2,6 +2,7 @@ module OpenAI
 
 using Downloads
 using JSON3
+using HTTP
 
 
 abstract type AbstractOpenAIProvider end
