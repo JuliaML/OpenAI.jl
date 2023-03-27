@@ -190,6 +190,7 @@ https://platform.openai.com/docs/api-reference/chat
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 - `messages::Vector`: The chat history so far.
+- `streamcallback=nothing`: Function to call on each chunk of the chat response in streaming mode
 
 ## Example:
 
@@ -200,6 +201,44 @@ julia> CC = create_chat("..........", "gpt-3.5-turbo",
 
 julia> CC.response.choices[1][:message][:content]
 "\n\nThe OpenAI mission is to create safe and beneficial artificial intelligence (AI) that can help humanity achieve its full potential. The organization aims to discover and develop technical approaches to AI that are safe and aligned with human values. OpenAI believes that AI can help to solve some of the world's most pressing problems, such as climate change, disease, inequality, and poverty. The organization is committed to advancing research and development in AI while ensuring that it is used ethically and responsibly."
+```
+
+### Streaming
+
+When a function that takes a single `String` as an argument is passed in the `streamcallback` argument, a request will be made in
+in streaming mode. The `streamcallback` callback will be called on every line of the streamed response. Here we use a callback
+that prints out the current time to demonstrate how different parts of the response are received at different times. 
+
+The response body will reflect the chunked nature of the response, so some reassembly will be required to recover the full
+message returned by the API.
+
+```julia
+julia> CC = create_chat(key, "gpt-3.5-turbo", 
+           [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
+       streamcallback = x->println(Dates.now()));
+2023-03-27T12:34:50.428
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.545
+2023-03-27T12:34:50.556
+2023-03-27T12:34:50.556
+
+julia> map(r->r["choices"][1]["delta"], CC.response)
+5-element Vector{JSON3.Object{Base.CodeUnits{UInt8, SubString{String}}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}}}:
+ {
+   "role": "assistant"
+}
+ {
+   "content": "North"
+}
+ {
+   "content": " America"
+}
+ {
+   "content": "."
+}
+ {}
 ```
 """
 function create_chat(api_key::String, model_id::String, messages, streamcallback=nothing; kwargs...)
