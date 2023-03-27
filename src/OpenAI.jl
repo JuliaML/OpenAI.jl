@@ -80,9 +80,6 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
         end
     end
 
-    println(resp)
-    println(body)
-
     return resp, body
 end
 
