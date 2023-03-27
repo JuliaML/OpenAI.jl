@@ -106,7 +106,20 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
     if resp.status >= 400
         status_error(resp, body)
     else
-        return OpenAIResponse(resp.status, JSON3.read(body))
+        return if isnothing(streamcallback)
+            OpenAIResponse(resp.status, JSON3.read(body))
+        else
+            # assemble the streaming response body into a proper JSON object
+            lines = split(body, "\n") # split body into lines
+
+            lines = filter(!isempty, lines)[1:end-1] # throw out empty lines, and skip the last line that is just "data: [DONE]"
+
+            # read each line, which looks like "data: {<json elements>}"
+            parsed = map(line->JSON3.read( line[6:end]), lines)
+
+            OpenAIResponse(Int(resp.status), parsed)
+        end
+
     end
 end
 
