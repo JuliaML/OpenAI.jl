@@ -13,7 +13,7 @@ using Pkg; Pkg.add("OpenAI")
 ## Quick Start
 1. Create an [OpenAI account](https://chat.openai.com/auth/login), if you don't already have one
 
-2. Create a [secrete API key](https://platform.openai.com/account/api-keys)
+2. Create a [secret API key](https://platform.openai.com/account/api-keys)
 
 3. Choose a [model](https://platform.openai.com/docs/models) to interact with
 
