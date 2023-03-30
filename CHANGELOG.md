@@ -1,3 +1,7 @@
+### 0.8.0
+
+* feature: introduce provider abstraction to support arbitrary OpenAI deployments
+
 ### 0.7.0
 
 * feature: add image generation endpoint
