@@ -88,7 +88,7 @@ function status_error(resp, log=nothing)
     error("request status $(resp.message)$logs")
 end
 
-function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, streamcallback, kwargs...)
+function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, streamcallback=nothing, kwargs...)
     # add stream: True to the API call if a stream callback function is passed
     if !isnothing(streamcallback)
         kwargs = (kwargs..., stream=true)
