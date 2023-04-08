@@ -1,3 +1,7 @@
+### 0.8.1
+
+* feature: add chat streaming
+
 ### 0.8.0
 
 * feature: introduce provider abstraction to support arbitrary OpenAI deployments
