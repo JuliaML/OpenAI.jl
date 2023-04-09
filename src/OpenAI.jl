@@ -2,6 +2,7 @@ module OpenAI
 
 using Downloads
 using JSON3
+using HTTP
 
 
 abstract type AbstractOpenAIProvider end
@@ -45,19 +46,80 @@ function request_body(url; kwargs...)
     return resp, body
 end
 
+function request_body_live(url; method, input, headers, streamcallback, kwargs...)
+    resp = nothing
+
+    body = sprint() do output
+        resp = HTTP.open("POST", url, headers) do stream
+
+            body = String(take!(input))
+            write(stream, body)
+
+            HTTP.closewrite(stream)    # indicate we're done writing to the request
+
+            r = HTTP.startread(stream) # start reading the response
+            
+            isdone = false
+
+            while !eof(stream) || !isdone
+                chunk = String(readavailable(stream))
+
+                if endswith(strip(chunk), "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
+                    isdone = true
+                end
+
+                # call the callback (if present) on the latest chunk
+                if !isnothing(streamcallback)
+                    streamcallback(chunk)
+                end
+
+                # append the latest chunk to the body
+                print(output, chunk)
+            end
+            HTTP.closeread(stream)
+        end
+    end
+
+    return resp, body
+end
+
 function status_error(resp, log=nothing)
     logs = !isnothing(log) ? ": $log" : ""
     error("request status $(resp.message)$logs")
 end
 
-function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, kwargs...)
+function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, streamcallback=nothing, kwargs...)
+    # add stream: True to the API call if a stream callback function is passed
+    if !isnothing(streamcallback)
+        kwargs = (kwargs..., stream=true)
+    end
+
     params = build_params(kwargs)
     url = build_url(provider, api)
-    resp, body = request_body(url; method, input = params, headers = auth_header(provider, api_key))
+    resp, body = let
+        if isnothing(streamcallback)
+            request_body(url; method, input = params, headers = auth_header(provider, api_key))
+        else
+            request_body_live(url; method, input = params, headers = auth_header(provider, api_key), streamcallback=streamcallback)
+        end
+    end
     if resp.status >= 400
         status_error(resp, body)
     else
-        return OpenAIResponse(resp.status, JSON3.read(body))
+        return if isnothing(streamcallback)
+            OpenAIResponse(resp.status, JSON3.read(body))
+        else
+            # assemble the streaming response body into a proper JSON object
+            lines = split(body, "\n") # split body into lines
+
+            lines = filter(!isempty, lines)[1:end-1] # throw out empty lines, and skip the last line that is just "data: [DONE]"
+
+            # read each line, which looks like "data: {<json elements>}"
+            parsed = map(line->JSON3.read( line[6:end]), lines)
+
+            OpenAIResponse(Int(resp.status), parsed)
+        end
+
     end
 end
 
@@ -128,6 +190,7 @@ https://platform.openai.com/docs/api-reference/chat
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 - `messages::Vector`: The chat history so far.
+- `streamcallback=nothing`: Function to call on each chunk of the chat response in streaming mode
 
 ## Example:
 
@@ -139,12 +202,50 @@ julia> CC = create_chat("..........", "gpt-3.5-turbo",
 julia> CC.response.choices[1][:message][:content]
 "\n\nThe OpenAI mission is to create safe and beneficial artificial intelligence (AI) that can help humanity achieve its full potential. The organization aims to discover and develop technical approaches to AI that are safe and aligned with human values. OpenAI believes that AI can help to solve some of the world's most pressing problems, such as climate change, disease, inequality, and poverty. The organization is committed to advancing research and development in AI while ensuring that it is used ethically and responsibly."
 ```
+
+### Streaming
+
+When a function that takes a single `String` as an argument is passed in the `streamcallback` argument, a request will be made in
+in streaming mode. The `streamcallback` callback will be called on every line of the streamed response. Here we use a callback
+that prints out the current time to demonstrate how different parts of the response are received at different times. 
+
+The response body will reflect the chunked nature of the response, so some reassembly will be required to recover the full
+message returned by the API.
+
+```julia
+julia> CC = create_chat(key, "gpt-3.5-turbo", 
+           [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
+       streamcallback = x->println(Dates.now()));
+2023-03-27T12:34:50.428
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.524
+2023-03-27T12:34:50.545
+2023-03-27T12:34:50.556
+2023-03-27T12:34:50.556
+
+julia> map(r->r["choices"][1]["delta"], CC.response)
+5-element Vector{JSON3.Object{Base.CodeUnits{UInt8, SubString{String}}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}}}:
+ {
+   "role": "assistant"
+}
+ {
+   "content": "North"
+}
+ {
+   "content": " America"
+}
+ {
+   "content": "."
+}
+ {}
+```
 """
-function create_chat(api_key::String, model_id::String, messages; kwargs...)
-    return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, kwargs...)
+function create_chat(api_key::String, model_id::String, messages, streamcallback=nothing; kwargs...)
+    return openai_request("chat/completions", api_key; method = "POST", model = model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
-function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; kwargs...)
-    return openai_request("chat/completions", provider; method = "POST", model = model_id, messages=messages, kwargs...)
+function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; streamcallback=nothing, kwargs...)
+    return openai_request("chat/completions", provider; method = "POST", model = model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
 
 """
