@@ -2,6 +2,7 @@ module OpenAI
 
 using JSON3
 using HTTP
+using Downloads
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
