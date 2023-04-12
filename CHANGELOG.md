@@ -1,3 +1,8 @@
+### 0.8.2
+
+* bugfix: error in chat streaming
+* Refactor to remove Downloads.jl in favor of HTTP.jl
+
 ### 0.8.1
 
 * feature: add chat streaming
