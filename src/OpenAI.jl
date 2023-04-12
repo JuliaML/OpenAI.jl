@@ -2,7 +2,6 @@ module OpenAI
 
 using JSON3
 using HTTP
-using Downloads
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -37,12 +36,10 @@ function build_params(kwargs)
     return buf
 end
 
-function request_body(url; kwargs...)
-    resp = nothing
-    body = sprint() do output
-        resp = request(url; output=output, kwargs...)
-    end
-    return resp, body
+function request_body(url, method; input, headers, kwargs...)
+    input = input === nothing ? [] : input
+    resp = HTTP.request(method, url, body=input, headers=headers, kwargs...)
+    return resp, resp.body
 end
 
 function request_body_live(url; method, input, headers, streamcallback, kwargs...)
@@ -97,7 +94,7 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
     url = build_url(provider, api)
     resp, body = let
         if isnothing(streamcallback)
-            request_body(url; method, input=params, headers=auth_header(provider, api_key))
+            request_body(url, method; input=params, headers=auth_header(provider, api_key))
         else
             request_body_live(url; method, input=params, headers=auth_header(provider, api_key), streamcallback=streamcallback)
         end
@@ -116,7 +113,7 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
             # read each line, which looks like "data: {<json elements>}"
             parsed = map(line -> JSON3.read(line[6:end]), lines)
 
-            OpenAIResponse(Int(resp.status), parsed)
+            OpenAIResponse(resp.status, parsed)
         end
 
     end
@@ -132,7 +129,7 @@ function openai_request(api::AbstractString, provider::AbstractOpenAIProvider; m
 end
 
 struct OpenAIResponse{R}
-    status::Int
+    status::Int16
     response::R
 end
 
@@ -145,7 +142,7 @@ const DEFAULT_EMBEDDING_MODEL_ID = "text-embedding-ada-002"
 """
 List models
 
-https://beta.openai.com/docs/api-reference/models/list
+https://api.openai.com/v1/models
 
 # Arguments:
 - `api_key::String`: OpenAI API key
@@ -157,7 +154,7 @@ end
 """
 Retrieve model
 
-https://beta.openai.com/docs/api-reference/models/retrieve
+https://api.openai.com/v1/models/{model}
 
 # Arguments:
 - `api_key::String`: OpenAI API key
@@ -170,7 +167,7 @@ end
 """
 Create completion
 
-https://beta.openai.com/docs/api-reference/completions
+https://api.openai.com/v1/completions
 
 # Arguments:
 - `api_key::String`: OpenAI API key
@@ -250,7 +247,7 @@ end
 """
 Create edit
 
-https://beta.openai.com/docs/api-reference/edits/create
+https://api.openai.com/v1/edits
 
 # Arguments:
 - `api_key::String`: OpenAI API key
