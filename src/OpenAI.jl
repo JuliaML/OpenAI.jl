@@ -281,7 +281,7 @@ Create images
 
 https://platform.openai.com/docs/api-reference/images/create
 
-#Arguments: 
+# Arguments: 
 - `api_key::String`: OpenAI API key
 - `prompt`: The input text to generate the image(s) for, as String or array of tokens.
 - `n`::Integer Optional. The number of images to generate. Must be between 1 and 10.
