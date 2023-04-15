@@ -142,10 +142,10 @@ const DEFAULT_EMBEDDING_MODEL_ID = "text-embedding-ada-002"
 """
 List models
 
-https://api.openai.com/v1/models
-
 # Arguments:
 - `api_key::String`: OpenAI API key
+
+For additional details, visit https://platform.openai.com/docs/api-reference/models/list
 """
 function list_models(api_key::String; http_kwargs::NamedTuple=NamedTuple())
     return openai_request("models", api_key; method="GET", http_kwargs=http_kwargs)
@@ -154,11 +154,11 @@ end
 """
 Retrieve model
 
-https://api.openai.com/v1/models/{model}
-
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
+
+For additional details, visit https://platform.openai.com/docs/api-reference/models/retrieve
 """
 function retrieve_model(api_key::String, model_id::String; http_kwargs::NamedTuple=NamedTuple())
     return openai_request("models/$(model_id)", api_key; method="GET", http_kwargs=http_kwargs)
@@ -167,11 +167,18 @@ end
 """
 Create completion
 
-https://api.openai.com/v1/completions
-
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
+
+# Keyword Arguments (check the OpenAI docs for the exhaustive list):
+- `temperature::Float64=1.0`: What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.
+- `top_p::Float64=1.0`: An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.
+
+For more details about the endpoint and additional arguments, visit https://platform.openai.com/docs/api-reference/completions 
+
+# HTTP.request keyword arguments:
+- `http_kwargs::NamedTuple=NamedTuple()`: Keyword arguments to pass to HTTP.request (e. g., `http_kwargs=(connection_timeout=2,)` to set a connection timeout of 2 seconds).
 """
 function create_completion(api_key::String, model_id::String; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
     return openai_request("completions", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, kwargs...)
@@ -180,13 +187,22 @@ end
 """
 Create chat
 
-https://platform.openai.com/docs/api-reference/chat
-
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 - `messages::Vector`: The chat history so far.
-- `streamcallback=nothing`: Function to call on each chunk of the chat response in streaming mode
+- `streamcallback=nothing`: Function to call on each chunk (delta) of the chat response in streaming mode.
+
+# Keyword Arguments (check the OpenAI docs for the exhaustive list):
+- `temperature::Float64=1.0`: What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.
+- `top_p::Float64=1.0`: An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.
+
+!!! note: do not use `stream=true` option here, instead use the `streamcallback` keyword argument (see the relevant section below).
+
+For more details about the endpoint and additional arguments, visit https://platform.openai.com/docs/api-reference/chat
+
+# HTTP.request keyword arguments:
+- `http_kwargs::NamedTuple=NamedTuple()`: Keyword arguments to pass to HTTP.request (e. g., `http_kwargs=(connection_timeout=2,)` to set a connection timeout of 2 seconds).
 
 ## Example:
 
@@ -247,14 +263,17 @@ end
 """
 Create edit
 
-https://api.openai.com/v1/edits
-
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id (e.g. "text-davinci-edit-001")
 - `instruction::String`: The instruction that tells the model how to edit the prompt.
 - `input::String` (optional): The input text to use as a starting point for the edit.
 - `n::Int` (optional): How many edits to generate for the input and instruction.
+
+# Keyword Arguments:
+- `http_kwargs::NamedTuple` (optional): Keyword arguments to pass to HTTP.request.
+
+For additional details about the endpoint, visit https://platform.openai.com/docs/api-reference/edits
 """
 function create_edit(api_key::String, model_id::String, instruction::String; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
     return openai_request("edits", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, instruction, kwargs...)
@@ -263,29 +282,36 @@ end
 """
 Create embeddings
 
-https://platform.openai.com/docs/api-reference/embeddings
-
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `input`: The input text to generate the embedding(s) for, as String or array of tokens.
     To get embeddings for multiple inputs in a single request, pass an array of strings
     or array of token arrays. Each input must not exceed 8192 tokens in length.
 - `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
+
+# Keyword Arguments:
+- `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
+
+For additional details about the endpoint, visit https://platform.openai.com/docs/api-reference/embeddings
 """
 function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
     return openai_request("embeddings", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, input, kwargs...)
 end
 
 """
-Create images 
-
-https://platform.openai.com/docs/api-reference/images/create
+Create images
 
 # Arguments: 
 - `api_key::String`: OpenAI API key
 - `prompt`: The input text to generate the image(s) for, as String or array of tokens.
 - `n`::Integer Optional. The number of images to generate. Must be between 1 and 10.
 - `size`::String. Optional. Defaults to 1024x1024. The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+
+# Keyword Arguments:
+- `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
+- `response_format`::String: Optional. Defaults to "url". The format of the response. Must be one of "url" or "b64_json".
+
+For additional details about the endpoint, visit https://platform.openai.com/docs/api-reference/images/create
 
 # once the request is made, 
 download like this: 
