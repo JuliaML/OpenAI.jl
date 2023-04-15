@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - add-documenter
     tags: '*'
   pull_request:
 
