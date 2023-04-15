@@ -84,7 +84,7 @@ function status_error(resp, log=nothing)
     error("request status $(resp.message)$logs")
 end
 
-function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, streamcallback=nothing, kwargs...)
+function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, http_kwargs, streamcallback=nothing, kwargs...)
     # add stream: True to the API call if a stream callback function is passed
     if !isnothing(streamcallback)
         kwargs = (kwargs..., stream=true)
@@ -94,9 +94,9 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
     url = build_url(provider, api)
     resp, body = let
         if isnothing(streamcallback)
-            request_body(url, method; input=params, headers=auth_header(provider, api_key))
+            request_body(url, method; input=params, headers=auth_header(provider, api_key), http_kwargs...)
         else
-            request_body_live(url; method, input=params, headers=auth_header(provider, api_key), streamcallback=streamcallback)
+            request_body_live(url; method, input=params, headers=auth_header(provider, api_key), streamcallback=streamcallback, http_kwargs...)
         end
     end
     if resp.status >= 400
@@ -119,13 +119,13 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
     end
 end
 
-function openai_request(api::AbstractString, api_key::AbstractString; method, streamcallback=nothing, kwargs...)
+function openai_request(api::AbstractString, api_key::AbstractString; method, http_kwargs, streamcallback=nothing, kwargs...)
     global DEFAULT_PROVIDER
-    _request(api, DEFAULT_PROVIDER, api_key; method, streamcallback=streamcallback, kwargs...)
+    _request(api, DEFAULT_PROVIDER, api_key; method, http_kwargs, streamcallback=streamcallback, kwargs...)
 end
 
-function openai_request(api::AbstractString, provider::AbstractOpenAIProvider; method, streamcallback=nothing, kwargs...)
-    _request(api, provider; method, streamcallback=streamcallback, kwargs...)
+function openai_request(api::AbstractString, provider::AbstractOpenAIProvider; method, http_kwargs, streamcallback=nothing, kwargs...)
+    _request(api, provider; method, http_kwargs, streamcallback=streamcallback, kwargs...)
 end
 
 struct OpenAIResponse{R}
@@ -147,8 +147,8 @@ https://api.openai.com/v1/models
 # Arguments:
 - `api_key::String`: OpenAI API key
 """
-function list_models(api_key::String)
-    return openai_request("models", api_key; method="GET")
+function list_models(api_key::String; http_kwargs::NamedTuple=NamedTuple())
+    return openai_request("models", api_key; method="GET", http_kwargs=http_kwargs)
 end
 
 """
@@ -160,8 +160,8 @@ https://api.openai.com/v1/models/{model}
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 """
-function retrieve_model(api_key::String, model_id::String)
-    return openai_request("models/$(model_id)", api_key; method="GET")
+function retrieve_model(api_key::String, model_id::String; http_kwargs::NamedTuple=NamedTuple())
+    return openai_request("models/$(model_id)", api_key; method="GET", http_kwargs=http_kwargs)
 end
 
 """
@@ -173,8 +173,8 @@ https://api.openai.com/v1/completions
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id
 """
-function create_completion(api_key::String, model_id::String; kwargs...)
-    return openai_request("completions", api_key; method="POST", model=model_id, kwargs...)
+function create_completion(api_key::String, model_id::String; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
+    return openai_request("completions", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, kwargs...)
 end
 
 """
@@ -237,11 +237,11 @@ julia> map(r->r["choices"][1]["delta"], CC.response)
  {}
 ```
 """
-function create_chat(api_key::String, model_id::String, messages, streamcallback=nothing; kwargs...)
-    return openai_request("chat/completions", api_key; method="POST", model=model_id, messages=messages, streamcallback=streamcallback, kwargs...)
+function create_chat(api_key::String, model_id::String, messages; http_kwargs::NamedTuple=NamedTuple(), streamcallback=nothing, kwargs...)
+    return openai_request("chat/completions", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
-function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; streamcallback=nothing, kwargs...)
-    return openai_request("chat/completions", provider; method="POST", model=model_id, messages=messages, streamcallback=streamcallback, kwargs...)
+function create_chat(provider::AbstractOpenAIProvider, model_id::String, messages; http_kwargs::NamedTuple=NamedTuple(), streamcallback=nothing, kwargs...)
+    return openai_request("chat/completions", provider; method="POST", http_kwargs=http_kwargs, model=model_id, messages=messages, streamcallback=streamcallback, kwargs...)
 end
 
 """
@@ -256,8 +256,8 @@ https://api.openai.com/v1/edits
 - `input::String` (optional): The input text to use as a starting point for the edit.
 - `n::Int` (optional): How many edits to generate for the input and instruction.
 """
-function create_edit(api_key::String, model_id::String, instruction::String; kwargs...)
-    return openai_request("edits", api_key; method="POST", model=model_id, instruction, kwargs...)
+function create_edit(api_key::String, model_id::String, instruction::String; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
+    return openai_request("edits", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, instruction, kwargs...)
 end
 
 """
@@ -272,8 +272,8 @@ https://platform.openai.com/docs/api-reference/embeddings
     or array of token arrays. Each input must not exceed 8192 tokens in length.
 - `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
 """
-function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; kwargs...)
-    return openai_request("embeddings", api_key; method="POST", model=model_id, input, kwargs...)
+function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
+    return openai_request("embeddings", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, input, kwargs...)
 end
 
 """
@@ -291,8 +291,8 @@ https://platform.openai.com/docs/api-reference/images/create
 download like this: 
 download(r.response["data"][begin]["url"], "image.png")
 """
-function create_images(api_key::String, prompt, n::Integer=1, size::String="256x256"; kwargs...)
-    return openai_request("images/generations", api_key; method="POST", prompt, kwargs...)
+function create_images(api_key::String, prompt, n::Integer=1, size::String="256x256"; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
+    return openai_request("images/generations", api_key; method="POST", http_kwargs=http_kwargs, prompt, kwargs...)
 end
 
 export OpenAIResponse
