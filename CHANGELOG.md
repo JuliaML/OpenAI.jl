@@ -1,3 +1,8 @@
+### 0.8.3
+
+* bugfix: issue with HTTP.request kwargs propagation, 
+          enables the user to pass an arbitrarily named tuple to http_kwargs
+
 ### 0.8.2
 
 * bugfix: error in chat streaming
