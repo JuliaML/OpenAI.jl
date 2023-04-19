@@ -15,15 +15,53 @@ Base.@kwdef struct AzureProvider <: AbstractOpenAIProvider
     api_version::String = "2023-03-15-preview"
 end
 
-const DEFAULT_PROVIDER = OpenAIProvider()
+"""
+    DEFAULT_PROVIDER
 
-auth_header(provider::AbstractOpenAIProvider, api_key::AbstractString) = error("auth_header not implemented for $(typeof(provider))")
-auth_header(provider::OpenAIProvider, api_key::AbstractString=provider.api_key) = ["Authorization" => "Bearer $(isempty(api_key) ? provider.api_key : api_key)", "Content-Type" => "application/json"]
-auth_header(provider::AzureProvider, api_key::AbstractString=provider.api_key) = ["api-key" => (isempty(api_key) ? provider.api_key : api_key), "Content-Type" => "application/json"]
+Default provider for OpenAI API requests.
+"""
+const DEFAULT_PROVIDER = let 
+    api_key = get(ENV, "OPENAI_API_KEY", nothing)
+    if api_key === nothing
+        OpenAIProvider()
+    else
+        OpenAIProvider(api_key=api_key)
+    end
+end
 
-build_url(provider::AbstractOpenAIProvider, api::String) = error("build_url not implemented for $(typeof(provider))")
-build_url(provider::OpenAIProvider, api::String) = "$(provider.base_url)/$(api)"
+"""
+    auth_header(provider::AbstractOpenAIProvider, api_key::AbstractString)
+
+Return the authorization header for the given provider and API key.
+"""
+auth_header(provider::AbstractOpenAIProvider) = auth_header(provider, provider.api_key)
+function auth_header(::OpenAIProvider, api_key::AbstractString)
+    isempty(api_key) && throw(ArgumentError("api_key must be provided"))
+    [
+        "Authorization" => "Bearer $api_key",
+        "Content-Type" => "application/json"
+    ]
+end
+function auth_header(::AzureProvider, api_key::AbstractString)
+    isempty(api_key) && throw(ArgumentError("api_key must be provided"))
+    [
+        "api-key" => api_key,
+        "Content-Type" => "application/json"
+    ]
+end
+
+"""
+    build_url(provider::AbstractOpenAIProvider, api::AbstractString)
+
+Return the URL for the given provider and API.
+"""
+build_url(provider::AbstractOpenAIProvider) = build_url(provider, provider.api)
+function build_url(provider::OpenAIProvider, api::String)
+    isempty(api) && throw(ArgumentError("api must be provided"))
+    "$(provider.base_url)/$(api)"
+end
 function build_url(provider::AzureProvider, api::String)
+    isempty(api) && throw(ArgumentError("api must be provided"))
     (; base_url, api_version) = provider
     return "$(base_url)/$(api)?api-version=$(api_version)"
 end
