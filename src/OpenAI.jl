@@ -2,6 +2,7 @@ module OpenAI
 
 using JSON3
 using HTTP
+using Dates
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -36,14 +37,14 @@ Return the authorization header for the given provider and API key.
 """
 auth_header(provider::AbstractOpenAIProvider) = auth_header(provider, provider.api_key)
 function auth_header(::OpenAIProvider, api_key::AbstractString)
-    isempty(api_key) && throw(ArgumentError("api_key must be provided"))
+    isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "Authorization" => "Bearer $api_key",
         "Content-Type" => "application/json"
     ]
 end
 function auth_header(::AzureProvider, api_key::AbstractString)
-    isempty(api_key) && throw(ArgumentError("api_key must be provided"))
+    isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "api-key" => api_key,
         "Content-Type" => "application/json"
@@ -57,11 +58,11 @@ Return the URL for the given provider and API.
 """
 build_url(provider::AbstractOpenAIProvider) = build_url(provider, provider.api)
 function build_url(provider::OpenAIProvider, api::String)
-    isempty(api) && throw(ArgumentError("api must be provided"))
+    isempty(api) && throw(ArgumentError("api cannot be empty"))
     "$(provider.base_url)/$(api)"
 end
 function build_url(provider::AzureProvider, api::String)
-    isempty(api) && throw(ArgumentError("api must be provided"))
+    isempty(api) && throw(ArgumentError("api cannot be empty"))
     (; base_url, api_version) = provider
     return "$(base_url)/$(api)?api-version=$(api_version)"
 end
@@ -359,6 +360,83 @@ function create_images(api_key::String, prompt, n::Integer=1, size::String="256x
     return openai_request("images/generations", api_key; method="POST", http_kwargs=http_kwargs, prompt, kwargs...)
 end
 
+# api usage status
+
+"""
+    get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
+
+Get usage status for the last `numofdays` days.
+
+# Arguments:
+- `provider::OpenAIProvider`: OpenAI provider object.
+- `numofdays::Int`: Optional. Defaults to 99. The number of days to get usage status for.
+   Note that the maximum `numofdays` is 99.
+
+# Returns:
+- `quota`: The total quota for the subscription.(unit: USD)
+- `usage`: The total usage for the subscription.(unit: USD)
+- `daily_costs`: The daily costs for the subscription.
+
+Each element of `daily_costs` looks like this:
+```
+{
+    "timestamp": 1681171200,
+   "line_items": [
+                   {
+                      "name": "Instruct models",
+                      "cost": 0
+                   },
+                   {
+                      "name": "Chat models",
+                      "cost": 0
+                   },
+                   {
+                      "name": "GPT-4",
+                      "cost": 0
+                   },
+                   {
+                      "name": "Fine-tuned models",
+                      "cost": 0
+                   },
+                   {
+                      "name": "Embedding models",
+                      "cost": 0
+                   },
+                   {
+                      "name": "Image models",
+                      "cost": 0
+                   },
+                   {
+                      "name": "Audio models",
+                      "cost": 0
+                   }
+                 ]
+}
+```
+"""
+function get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
+    (; base_url, api_key) = provider
+    isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
+    numofdays > 99 && throw(ArgumentError("numofdays cannot be greater than 99"))
+
+    # Get total quota from subscription_url
+    subscription_url = "$base_url/dashboard/billing/subscription"
+    subscrip = HTTP.get(subscription_url, headers = auth_header(provider))
+    resp = OpenAIResponse(subscrip.status, JSON3.read(subscrip.body))
+    # TODO: catch error
+    quota = resp.response.hard_limit_usd
+
+    # Get usage status from billing_url
+    start_date = today()
+    end_date = today() + Day(numofdays)
+    billing_url = "$base_url/dashboard/billing/usage?start_date=$(start_date)&end_date=$(end_date)"
+    billing = HTTP.get(billing_url, headers = auth_header(provider))
+    resp = OpenAIResponse(billing.status, JSON3.read(billing.body))
+    usage = resp.response.total_usage / 100
+    daily_costs = resp.response.daily_costs
+    return (; quota, usage, daily_costs)
+end
+
 export OpenAIResponse
 export list_models
 export retrieve_model
@@ -367,5 +445,6 @@ export create_completion
 export create_edit
 export create_embeddings
 export create_images
+export get_usage_status
 
 end # module
