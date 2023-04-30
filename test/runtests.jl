@@ -12,4 +12,7 @@ using Test
   @testset "embeddings" begin
     include("embeddings.jl")
   end
+  @testset "user usage" begin
+    include("usage.jl")
+  end
 end
