@@ -1,3 +1,8 @@
+### 0.8.4
+
+* feature: get api usage via get_usage_status(), add test
+* refactor: rewrite methods relate to api
+
 ### 0.8.3
 
 * bugfix: issue with HTTP.request kwargs propagation, 

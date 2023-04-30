@@ -1,7 +1,7 @@
 name = "OpenAI"
 uuid = "e9f21f70-7185-4079-aca2-91159181367c"
 authors = ["Rory Linehan <rorylinehan@protonmail.com>"]
-version = "0.8.3"
+version = "0.8.4"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
