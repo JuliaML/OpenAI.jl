@@ -1,7 +1,7 @@
 ### 0.8.4
 
 * feature: get api usage via get_usage_status(), add test
-* refactor: rewrite methods relate to api
+* refactor: rewrite methods related to api
 
 ### 0.8.3
 
