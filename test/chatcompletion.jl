@@ -13,7 +13,7 @@
     r = create_chat(
         ENV["OPENAI_API_KEY"],
         "gpt-3.5-turbo",
-        [Dict("role" => "user", "content" => "Summarize HTTP.jl package in one short sentence.")],
+        [Dict("role" => "user", "content" => "Summarize HTTP.jl package in a short sentence.")],
         http_kwargs=(connect_timeout=10, readtimeout=0)
     )
     println(r.response["choices"][begin]["message"]["content"])
