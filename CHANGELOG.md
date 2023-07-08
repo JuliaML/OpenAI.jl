@@ -1,3 +1,17 @@
+### 0.8.5
+
+#### Pull Requests: 
+
+* https://github.com/JuliaML/OpenAI.jl/pull/40
+
+#### Notes:
+
+* bugfix: created a separate test file for chat completion: despite the naming similarity, 
+          the /v1/chat/completions has nothing to do with /v1/completions. 
+          If a test fails, we need to be able to differentiate between the two easily.
+* added JET code quality test
+* add attributions for contributors via authors field in Project.toml
+
 ### 0.8.4
 
 * feature: get api usage via get_usage_status(), add test
