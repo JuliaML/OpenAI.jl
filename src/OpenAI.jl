@@ -93,23 +93,32 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
             HTTP.closewrite(stream)    # indicate we're done writing to the request
 
             r = HTTP.startread(stream) # start reading the response
-
             isdone = false
 
             while !eof(stream) || !isdone
-                chunk = String(readavailable(stream))
+                # Extract all available messages
+                masterchunk = String(readavailable(stream))
 
-                if endswith(strip(chunk), "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
-                    isdone = true
+                # Split into subchunks on newlines.
+                # Occasionally, the streaming will append multiple messages together,
+                # and iterating through each line in turn will make sure that
+                # streamingcallback is called on each message in turn.
+                chunks = String.(filter(!isempty, split(masterchunk, "\n")))
+
+                # Iterate through each chunk in turn.
+                for chunk in chunks
+                    if occursin(chunk, "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
+                        isdone = true
+                    end
+
+                    # call the callback (if present) on the latest chunk
+                    if !isnothing(streamcallback)
+                        streamcallback(chunk)
+                    end
+
+                    # append the latest chunk to the body
+                    print(output, chunk)
                 end
-
-                # call the callback (if present) on the latest chunk
-                if !isnothing(streamcallback)
-                    streamcallback(chunk)
-                end
-
-                # append the latest chunk to the body
-                print(output, chunk)
             end
             HTTP.closeread(stream)
         end
@@ -147,7 +156,8 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
             # assemble the streaming response body into a proper JSON object
             lines = split(body, "\n") # split body into lines
 
-            lines = filter(!isempty, lines)[1:end-1] # throw out empty lines, and skip the last line that is just "data: [DONE]"
+            # throw out empty lines, skip "data: [DONE] bits
+            lines = filter(x -> !isempty(x) && !occursin("[DONE]", x), lines) 
 
             # read each line, which looks like "data: {<json elements>}"
             parsed = map(line -> JSON3.read(line[6:end]), lines)
