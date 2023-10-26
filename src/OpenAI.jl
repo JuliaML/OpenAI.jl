@@ -77,7 +77,7 @@ end
 
 function request_body(url, method; input, headers, kwargs...)
     input = input === nothing ? [] : input
-    resp = HTTP.request(method, url, body=input, headers=headers, kwargs...)
+    resp = HTTP.request(method, url; body=input, headers=headers, kwargs...)
     return resp, resp.body
 end
 
