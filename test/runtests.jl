@@ -34,7 +34,8 @@ end
   @testset "embeddings" begin
     include("embeddings.jl")
   end
-  @testset "usage" begin
-    include("usage.jl")
-  end  
+  # https://github.com/JuliaML/OpenAI.jl/issues/46
+  # @testset "usage" begin
+  #   include("usage.jl")
+  # end  
 end

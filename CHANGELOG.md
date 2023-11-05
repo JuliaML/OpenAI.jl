@@ -1,3 +1,7 @@
+### 0.8.7
+
+* disable `test/usage.jl` in `test/runtests.jl` to close issue: https://github.com/JuliaML/OpenAI.jl/issues/46
+
 ### 0.8.6
 
 #### Pull Requests: 

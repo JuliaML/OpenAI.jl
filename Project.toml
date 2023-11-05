@@ -1,7 +1,7 @@
 name = "OpenAI"
 uuid = "e9f21f70-7185-4079-aca2-91159181367c"
 authors = ["Rory Linehan @rory-linehan", "Marius Fersigan @algunion", "RexWzh @RexWzh", "Thatcher Chamberlin @ThatcherC", "Nicu Stiurca @nstiurca", "Peter @chengchingwen", "Stefan Wojcik @stefanjwojcik", "J S @svilupp", "Logan Kilpatrick @logankilpatrick", "Jerry Ling @Moelf"]
-version = "0.8.6"
+version = "0.8.7"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

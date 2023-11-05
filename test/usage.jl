@@ -1,5 +1,6 @@
 # Get usage status of an api
 
+# See https://github.com/JuliaML/OpenAI.jl/issues/46
 @testset "usage information" begin
     provider = OpenAI.OpenAIProvider(ENV["OPENAI_API_KEY"], "https://api.openai.com/v1", "")
     (; quota, usage, daily_costs) = get_usage_status(provider, numofdays=5)

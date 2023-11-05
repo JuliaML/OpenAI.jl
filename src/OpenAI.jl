@@ -376,7 +376,9 @@ end
 """
     get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
 
-Get usage status for the last `numofdays` days.
+    NOTE: currently this endpoint can only be used from the browser. See https://github.com/JuliaML/OpenAI.jl/issues/46
+
+    Get usage status for the last `numofdays` days.
 
 # Arguments:
 - `provider::OpenAIProvider`: OpenAI provider object.
