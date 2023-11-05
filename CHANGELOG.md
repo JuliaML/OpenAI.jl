@@ -1,3 +1,13 @@
+### 0.8.6
+
+#### Pull Requests: 
+
+* https://github.com/JuliaML/OpenAI.jl/pull/49
+
+#### Notes:
+
+* bugfix: http_kwargs (ie, kwargs to be provided to HTTP.jl requests) are not being passed, because of a missing semicolon inside of request_body() call.
+
 ### 0.8.5
 
 #### Pull Requests: 

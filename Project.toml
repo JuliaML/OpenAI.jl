@@ -12,7 +12,7 @@ authors = [
     "Logan Kilpatrick @logankilpatrick",
     "Jerry Ling @Moelf"
 ]
-version = "0.8.5"
+version = "0.8.6"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
