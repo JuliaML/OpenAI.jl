@@ -40,9 +40,9 @@ returns
 "This is a test."
 ```
 
-# Overriding default parameters
+### Overriding default parameters
 
-If you have a non-standard setup, such as a local LLM or third-party that
+If you have a non-standard setup, such as a local LLM or third-party service that
 conforms to the OpenAI interface, you can override parameters using the `OpenAIProvider`
 struct in your application like this:
 
@@ -58,7 +58,6 @@ response = create_chat(
     [Dict("role" => "user", "content" => "Write some ancient Greek poetry")]
 )
 ```
-
 
 For more use cases [see tests](https://github.com/JuliaML/OpenAI.jl/tree/main/test).
 
