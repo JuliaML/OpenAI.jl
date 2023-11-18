@@ -24,12 +24,12 @@ using Pkg; Pkg.add("OpenAI")
 __⚠️ We strongly suggest setting up your API key as an ENV variable__.
 
 ```julia
-secret_key = "PAST_YOUR_SECRETE_KEY_HERE"
+secret_key = ENV["OPENAI_API_KEY"]
 model = "gpt-3.5-turbo"
 prompt =  "Say \"this is a test\""
 
 r = create_chat(
-    secret_key, 
+    secret_key,
     model,
     [Dict("role" => "user", "content"=> prompt)]
   )
@@ -39,7 +39,28 @@ returns
 ```julia
 "This is a test."
 ```
-For more use cases [see tests](https://github.com/rory-linehan/OpenAI.jl/tree/main/test).
+
+# Overriding default parameters
+
+If you have a non-standard setup, such as a local LLM or third-party that
+conforms to the OpenAI interface, you can override parameters using the `OpenAIProvider`
+struct in your application like this:
+
+```julia
+using OpenAI
+provider = OpenAI.OpenAIProvider(
+    api_key=ENV["OPENAI_API_KEY"],
+    base_url=ENV["OPENAI_BASE_URL_OVERRIDE"]
+)
+response = create_chat(
+    provider,
+    "gpt-3.5-turbo",
+    [Dict("role" => "user", "content" => "Write some ancient Greek poetry")]
+)
+```
+
+
+For more use cases [see tests](https://github.com/JuliaML/OpenAI.jl/tree/main/test).
 
 ## Feature requests
 

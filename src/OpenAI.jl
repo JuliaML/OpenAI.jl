@@ -21,7 +21,7 @@ end
 
 Default provider for OpenAI API requests.
 """
-const DEFAULT_PROVIDER = let 
+const DEFAULT_PROVIDER = let
     api_key = get(ENV, "OPENAI_API_KEY", nothing)
     if api_key === nothing
         OpenAIProvider()
@@ -157,7 +157,7 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
             lines = split(body, "\n") # split body into lines
 
             # throw out empty lines, skip "data: [DONE] bits
-            lines = filter(x -> !isempty(x) && !occursin("[DONE]", x), lines) 
+            lines = filter(x -> !isempty(x) && !occursin("[DONE]", x), lines)
 
             # read each line, which looks like "data: {<json elements>}"
             parsed = map(line -> JSON3.read(line[6:end]), lines)
@@ -275,7 +275,7 @@ The response body will reflect the chunked nature of the response, so some reass
 message returned by the API.
 
 ```julia
-julia> CC = create_chat(key, "gpt-3.5-turbo", 
+julia> CC = create_chat(key, "gpt-3.5-turbo",
            [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
        streamcallback = x->println(Dates.now()));
 2023-03-27T12:34:50.428
@@ -434,7 +434,7 @@ function get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
 
     # Get total quota from subscription_url
     subscription_url = "$base_url/dashboard/billing/subscription"
-    subscrip = HTTP.get(subscription_url, headers = auth_header(provider))
+    subscrip = HTTP.get(subscription_url, headers=auth_header(provider))
     resp = OpenAIResponse(subscrip.status, JSON3.read(subscrip.body))
     # TODO: catch error
     quota = resp.response.hard_limit_usd
@@ -443,7 +443,7 @@ function get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
     start_date = today()
     end_date = today() + Day(numofdays)
     billing_url = "$base_url/dashboard/billing/usage?start_date=$(start_date)&end_date=$(end_date)"
-    billing = HTTP.get(billing_url, headers = auth_header(provider))
+    billing = HTTP.get(billing_url, headers=auth_header(provider))
     resp = OpenAIResponse(billing.status, JSON3.read(billing.body))
     usage = resp.response.total_usage / 100
     daily_costs = resp.response.daily_costs
