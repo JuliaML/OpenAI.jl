@@ -1,7 +1,5 @@
 using Documenter, OpenAI
 
-makedocs(sitename="OpenAI.jl Documentation")
+makedocs(sitename = "OpenAI.jl Documentation")
 
-deploydocs(
-    repo = "github.com/JuliaML/OpenAI.jl.git",
-)
+deploydocs(repo = "github.com/JuliaML/OpenAI.jl.git")

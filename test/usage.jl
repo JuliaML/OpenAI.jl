@@ -3,7 +3,7 @@
 # See https://github.com/JuliaML/OpenAI.jl/issues/46
 @testset "usage information" begin
     provider = OpenAI.OpenAIProvider(ENV["OPENAI_API_KEY"], "https://api.openai.com/v1", "")
-    (; quota, usage, daily_costs) = get_usage_status(provider, numofdays=5)
+    (; quota, usage, daily_costs) = get_usage_status(provider, numofdays = 5)
     @test quota > 0
     @test usage >= 0
     @test length(daily_costs) == 5
