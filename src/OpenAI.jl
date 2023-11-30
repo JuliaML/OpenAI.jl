@@ -4,6 +4,8 @@ using JSON3
 using HTTP
 using Dates
 
+include("assistants.jl")
+
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
     api_key::String = ""
@@ -75,9 +77,18 @@ function build_params(kwargs)
     return buf
 end
 
-function request_body(url, method; input, headers, kwargs...)
-    input = input === nothing ? [] : input
-    resp = HTTP.request(method, url; body=input, headers=headers, kwargs...)
+function request_body(url, method; input, headers, query, kwargs...)
+    input = isnothing(input) ? [] : input
+    query = isnothing(query) ? [] : query
+
+    resp = HTTP.request(
+        method,
+        url;
+        body=input,
+        query=query,
+        headers=headers,
+        kwargs...
+    )
     return resp, resp.body
 end
 
@@ -132,7 +143,17 @@ function status_error(resp, log=nothing)
     error("request status $(resp.message)$logs")
 end
 
-function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key::AbstractString=provider.api_key; method, http_kwargs, streamcallback=nothing, kwargs...)
+function _request(
+    api::AbstractString,
+    provider::AbstractOpenAIProvider,
+    api_key::AbstractString=provider.api_key;
+    method,
+    query=nothing,
+    http_kwargs,
+    streamcallback=nothing,
+    additional_headers::AbstractVector=Pair{String,String}[],
+    kwargs...
+)
     # add stream: True to the API call if a stream callback function is passed
     if !isnothing(streamcallback)
         kwargs = (kwargs..., stream=true)
@@ -141,10 +162,28 @@ function _request(api::AbstractString, provider::AbstractOpenAIProvider, api_key
     params = build_params(kwargs)
     url = build_url(provider, api)
     resp, body = let
+        # Add whatever other headers we were given
+        headers = vcat(auth_header(provider, api_key), additional_headers)
+
         if isnothing(streamcallback)
-            request_body(url, method; input=params, headers=auth_header(provider, api_key), http_kwargs...)
+            request_body(
+                url,
+                method;
+                input=params,
+                headers=headers,
+                query=query,
+                http_kwargs...
+            )
         else
-            request_body_live(url; method, input=params, headers=auth_header(provider, api_key), streamcallback=streamcallback, http_kwargs...)
+            request_body_live(
+                url;
+                method,
+                input=params,
+                headers=headers,
+                query=query,
+                streamcallback=streamcallback,
+                http_kwargs...
+            )
         end
     end
     if resp.status >= 400
@@ -370,8 +409,6 @@ download like this:
 function create_images(api_key::String, prompt, n::Integer=1, size::String="256x256"; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
     return openai_request("images/generations", api_key; method="POST", http_kwargs=http_kwargs, prompt, kwargs...)
 end
-
-# api usage status
 
 """
     get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
