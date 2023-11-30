@@ -546,10 +546,6 @@ end
 # Message #
 ###########
 
-
-assistant_id = "asst_i1MDikQGNk2PJGtltQljCI6X"
-api_key = get(ENV, "OPENAI_KEY", nothing)
-
 # Assistants API to implement
 # - Create assistant file
 # - Retrueve assistant file
