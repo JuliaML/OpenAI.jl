@@ -546,11 +546,158 @@ end
 # Message #
 ###########
 
-# Assistants API to implement
-# - Create assistant file
-# - Retrueve assistant file
-# - delete assistant file
-# - list assistant files
+"""
+    create message
+
+"""
+function create_message(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    role::AbstractString,
+    content::AbstractString;
+    file_ids=nothing,
+    metadata=nothing,
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # POST https://api.openai.com/v1/threads/:thread_id/messages
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/messages",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs,
+        role=role,
+        content=content,
+        file_ids=file_ids,
+        metadata=metadata
+    )
+end
+
+"""
+    retrieve message
+
+Retrieves a message by ID.
+"""
+function retrieve_message(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    message_id::AbstractString;
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # GET https://api.openai.com/v1/threads/:thread_id/messages/:message_id
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/messages/$(message_id)",
+        api_key;
+        method="GET",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs
+    )
+end
+
+"""
+    delete message
+    
+"""
+function delete_message(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    message_id::AbstractString;
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # DELETE https://api.openai.com/v1/threads/:thread_id/messages/:message_id
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/messages/$(message_id)",
+        api_key;
+        method="DELETE",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs
+    )
+end
+
+"""
+    modify message
+
+"""
+function modify_message(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    message_id::AbstractString;
+    content=nothing,
+    file_ids=nothing,
+    metadata=nothing,
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # PATCH https://api.openai.com/v1/threads/:thread_id/messages/:message_id
+    # Requires the OpenAI-Beta: assistants=v1 header
+
+    # Collect all fields that are not empty 
+    # and store them in a named tuple to be passed on 
+    # as kwargs. This only grabs fields that are not empty,
+    # so that we don't overwrite existing values with empty ones.
+    kwargs = Dict()
+    !isnothing(content) && (kwargs["content"] = content)
+    !isnothing(file_ids) && (kwargs["file_ids"] = file_ids)
+    !isnothing(metadata) && (kwargs["metadata"] = metadata)
+
+    # Convert kwargs to namedtuple
+    key_tuple = Tuple(map(Symbol, k for k in keys(kwargs)))
+    value_tuple = Tuple(v for v in values(kwargs))
+    kwarg_nt = NamedTuple{key_tuple}(value_tuple)
+
+    openai_request(
+        "threads/$(thread_id)/messages/$(message_id)",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs,
+        kwarg_nt...
+    )
+end
+
+"""
+    list messages
+
+Returns an `OpenAIResponse` object containing a list of messages,
+sorted by the `created_at` timestamp of the objects.
+"""
+function list_messages(
+    api_key::AbstractString,
+    thread_id::AbstractString;
+    limit::Union{Integer,AbstractString}=20,
+    order::AbstractString="desc",
+    after::AbstractString="",
+    before::AbstractString="",
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # GET https://api.openai.com/v1/threads/:thread_id/messages
+    # Requires the OpenAI-Beta: assistants=v1 header
+
+    # Build query parameters
+    query = Pair{String,String}[
+        "limit"=>string(limit),
+        "order"=>order
+    ]
+    length(after) > 0 && push!(query, "after" => after)
+    length(before) > 0 && push!(query, "before" => before)
+
+    # Make the request to OpenAI
+    openai_request(
+        "threads/$(thread_id)/messages",
+        api_key;
+        method="GET",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        query=query,
+        http_kwargs=http_kwargs,
+    )
+end
 
 # Messages
 # - Create message
