@@ -22,18 +22,18 @@ end
 
 @testset "OpenAI.jl" begin
   printstyled(color=:blue, "\n")
-  # @testset "models" begin
-  #   include("models.jl")
-  # end
-  # @testset "chatcompletion" begin
-  #   include("chatcompletion.jl")
-  # end
-  # @testset "completion" begin
-  #   include("completion.jl")
-  # end
-  # @testset "embeddings" begin
-  #   include("embeddings.jl")
-  # end
+  @testset "models" begin
+    include("models.jl")
+  end
+  @testset "chatcompletion" begin
+    include("chatcompletion.jl")
+  end
+  @testset "completion" begin
+    include("completion.jl")
+  end
+  @testset "embeddings" begin
+    include("embeddings.jl")
+  end
   @testset "assistants" begin
     include("assistants.jl")
   end
