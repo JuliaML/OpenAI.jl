@@ -497,4 +497,25 @@ export create_embeddings
 export create_images
 export get_usage_status
 
+# Assistant exports
+export list_assistants
+export create_assistant
+export get_assistant
+export delete_assistant
+export modify_assistant
+
+# Thread exports
+export create_thread
+export get_thread
+export delete_thread
+export modify_thread
+
+# Message exports
+export create_message
+export list_messages
+export get_message
+export delete_message
+export modify_message
+
+
 end # module

@@ -433,7 +433,15 @@ end
     - `metadata`: Optional. Metadata for the message.
 
 # Keyword Arguments:
-- `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
+- `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.'
+
+# Usage
+
+```julia
+thread_id = create_thread(api_key, [
+    Dict("role" => "user", "content" => "Hello, how are you?")
+]).response.id
+```
 """
 function create_thread(
     api_key::AbstractString,
@@ -452,10 +460,6 @@ function create_thread(
         messages=messages
     )
 end
-
-thread_id = create_thread(api_key, [
-    Dict("role" => "user", "content" => "Hello, how are you?")
-]).response.id
 
 """
     retrieve thread
@@ -699,22 +703,144 @@ function list_messages(
     )
 end
 
-# Messages
-# - Create message
-# - Retrieve message
-# - Delete message
-# - Modify message
-# - List messages
-# - Retrieve message file
-# - List message files
+########
+# Runs #
+########
 
-# Runs
-# - Create run
-# - Retrieve run
-# - Modify run
-# - List runs
-# - Submit tool outputs to run
-# - cancel run
-# - create thread and run
-# - Retrieve run step
-# - List run steps
+"""
+    create run
+
+POST https://api.openai.com/v1/threads/{thread_id}/runs
+"""
+function create_run(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    engine::AbstractString,
+    prompt::AbstractString;
+    file_ids=nothing,
+    metadata=nothing,
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # POST https://api.openai.com/v1/threads/:thread_id/runs
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/runs",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs,
+        engine=engine,
+        prompt=prompt,
+        file_ids=file_ids,
+        metadata=metadata
+    )
+end
+
+"""
+    retrieve run
+
+GET https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}
+"""
+function retrieve_run(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    run_id::AbstractString;
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # GET https://api.openai.com/v1/threads/:thread_id/runs/:run_id
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/runs/$(run_id)",
+        api_key;
+        method="GET",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs
+    )
+end
+
+"""
+    modify run
+
+POST https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}
+"""
+function modify_run(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    run_id::AbstractString;
+    metadata=nothing,
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # POST https://api.openai.com/v1/threads/:thread_id/runs/:run_id
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/runs/$(run_id)",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs,
+        metadata=metadata
+    )
+end
+
+"""
+    list runs
+
+GET https://api.openai.com/v1/threads/{thread_id}/runs
+"""
+function list_runs(
+    api_key::AbstractString,
+    thread_id::AbstractString;
+    limit::Union{Integer,AbstractString}=20,
+    order::AbstractString="desc",
+    after::AbstractString="",
+    before::AbstractString="",
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # GET https://api.openai.com/v1/threads/:thread_id/runs
+    # Requires the OpenAI-Beta: assistants=v1 header
+
+    # Build query parameters
+    query = Pair{String,String}[
+        "limit"=>string(limit),
+        "order"=>order
+    ]
+    length(after) > 0 && push!(query, "after" => after)
+    length(before) > 0 && push!(query, "before" => before)
+
+    # Make the request to OpenAI
+    openai_request(
+        "threads/$(thread_id)/runs",
+        api_key;
+        method="GET",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        query=query,
+        http_kwargs=http_kwargs,
+    )
+end
+
+"""
+    Cancel run
+
+POST https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}/cancel
+"""
+function cancel_run(
+    api_key::AbstractString,
+    thread_id::AbstractString,
+    run_id::AbstractString;
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # POST https://api.openai.com/v1/threads/:thread_id/runs/:run_id/cancel
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/$(thread_id)/runs/$(run_id)/cancel",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs
+    )
+end
