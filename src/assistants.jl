@@ -842,3 +842,52 @@ function cancel_run(
         http_kwargs=http_kwargs
     )
 end
+
+"""
+    Create thread and run
+
+POST https://api.openai.com/v1/threads/runs
+
+# Arguments:
+- `api_key`
+- `assistant_id`
+
+# Keyword Arguments:
+- `thread`, a `Dict` with keys `"messages"` and `"metadata"`. 
+    `"messages"` is a vector of `Dict`s with keys `"role"`, `"content"`, 
+    `"file_ids"`, and `"metadata"`. `"metadata"` is a `Dict`.
+- `model` is a `String` representing the model to use for the run.
+  If not provided, this will use the assistant's default model.
+- `instructions` is a `String` representing the instructions for the run.
+  If not provided, this will use the assistant's default instructions.
+- `tools` is a `Vector` of `String`s representing the tools to use for the run.
+    If not provided, this will use the assistant's default tools.
+- `metadata` is a `Dict` representing the metadata for the run.
+"""
+function create_thread_and_run(
+    api_key::AbstractString,
+    assistant_id::AbstractString;
+    thread=nothing,
+    model=nothing,
+    instructions=nothing,
+    tools=nothing,
+    metadata=nothing,
+    http_kwargs::NamedTuple=NamedTuple()
+)
+    # The API endpoint is
+    # POST https://api.openai.com/v1/threads/runs
+    # Requires the OpenAI-Beta: assistants=v1 header
+    openai_request(
+        "threads/runs",
+        api_key;
+        method="POST",
+        additional_headers=[("OpenAI-Beta", "assistants=v1")],
+        http_kwargs=http_kwargs,
+        assistant_id=assistant_id,
+        thread=thread,
+        model=model,
+        instructions=instructions,
+        tools=tools,
+        metadata=metadata
+    )
+end
