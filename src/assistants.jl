@@ -445,7 +445,7 @@ thread_id = create_thread(api_key, [
 """
 function create_thread(
     api_key::AbstractString,
-    messages;
+    messages=nothing;
     http_kwargs::NamedTuple=NamedTuple()
 )
     # The API endpoint is
@@ -557,7 +557,7 @@ end
 function create_message(
     api_key::AbstractString,
     thread_id::AbstractString,
-    role::AbstractString,
+    # role::AbstractString, # Currently role is always "user"
     content::AbstractString;
     file_ids=nothing,
     metadata=nothing,
@@ -566,16 +566,29 @@ function create_message(
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/:thread_id/messages
     # Requires the OpenAI-Beta: assistants=v1 header
+
+    # Collect all fields that are not empty 
+    # and store them in a named tuple to be passed on 
+    # as kwargs. This only grabs fields that are not empty,
+    # so that we don't overwrite existing values with empty ones.
+    kwargs = Dict()
+    !isnothing(file_ids) && (kwargs["file_ids"] = file_ids)
+    !isnothing(metadata) && (kwargs["metadata"] = metadata)
+
+    # Convert kwargs to namedtuple
+    key_tuple = Tuple(map(Symbol, k for k in keys(kwargs)))
+    value_tuple = Tuple(v for v in values(kwargs))
+    kwarg_nt = NamedTuple{key_tuple}(value_tuple)
+
     openai_request(
         "threads/$(thread_id)/messages",
         api_key;
         method="POST",
         additional_headers=[("OpenAI-Beta", "assistants=v1")],
         http_kwargs=http_kwargs,
-        role=role,
         content=content,
-        file_ids=file_ids,
-        metadata=metadata
+        role="user", # Currently role is always "user", but this may change
+        kwarg_nt...
     )
 end
 
@@ -632,36 +645,19 @@ function modify_message(
     api_key::AbstractString,
     thread_id::AbstractString,
     message_id::AbstractString;
-    content=nothing,
-    file_ids=nothing,
     metadata=nothing,
     http_kwargs::NamedTuple=NamedTuple()
 )
     # The API endpoint is
     # PATCH https://api.openai.com/v1/threads/:thread_id/messages/:message_id
     # Requires the OpenAI-Beta: assistants=v1 header
-
-    # Collect all fields that are not empty 
-    # and store them in a named tuple to be passed on 
-    # as kwargs. This only grabs fields that are not empty,
-    # so that we don't overwrite existing values with empty ones.
-    kwargs = Dict()
-    !isnothing(content) && (kwargs["content"] = content)
-    !isnothing(file_ids) && (kwargs["file_ids"] = file_ids)
-    !isnothing(metadata) && (kwargs["metadata"] = metadata)
-
-    # Convert kwargs to namedtuple
-    key_tuple = Tuple(map(Symbol, k for k in keys(kwargs)))
-    value_tuple = Tuple(v for v in values(kwargs))
-    kwarg_nt = NamedTuple{key_tuple}(value_tuple)
-
     openai_request(
         "threads/$(thread_id)/messages/$(message_id)",
         api_key;
         method="POST",
         additional_headers=[("OpenAI-Beta", "assistants=v1")],
         http_kwargs=http_kwargs,
-        kwarg_nt...
+        metadata=metadata
     )
 end
 
@@ -715,10 +711,11 @@ POST https://api.openai.com/v1/threads/{thread_id}/runs
 function create_run(
     api_key::AbstractString,
     thread_id::AbstractString,
-    engine::AbstractString,
-    prompt::AbstractString;
-    file_ids=nothing,
+    assistant_id::AbstractString,
+    instructions=nothing;
+    tools=nothing,
     metadata=nothing,
+    model=nothing,
     http_kwargs::NamedTuple=NamedTuple()
 )
     # The API endpoint is
@@ -730,10 +727,11 @@ function create_run(
         method="POST",
         additional_headers=[("OpenAI-Beta", "assistants=v1")],
         http_kwargs=http_kwargs,
-        engine=engine,
-        prompt=prompt,
-        file_ids=file_ids,
-        metadata=metadata
+        assistant_id=assistant_id,
+        instructions=instructions,
+        tools=tools,
+        metadata=metadata,
+        model=model
     )
 end
 

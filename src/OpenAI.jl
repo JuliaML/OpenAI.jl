@@ -4,7 +4,6 @@ using JSON3
 using HTTP
 using Dates
 
-include("assistants.jl")
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -19,7 +18,7 @@ Base.@kwdef struct AzureProvider <: AbstractOpenAIProvider
 end
 
 """
-    DEFAULT_PROVIDER
+DEFAULT_PROVIDER
 
 Default provider for OpenAI API requests.
 """
@@ -55,8 +54,8 @@ end
 
 """
     build_url(provider::AbstractOpenAIProvider, api::AbstractString)
-
-Return the URL for the given provider and API.
+    
+    Return the URL for the given provider and API.
 """
 build_url(provider::AbstractOpenAIProvider) = build_url(provider, provider.api)
 function build_url(provider::OpenAIProvider, api::String)
@@ -317,7 +316,7 @@ message returned by the API.
 julia> CC = create_chat(key, "gpt-3.5-turbo",
            [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
        streamcallback = x->println(Dates.now()));
-2023-03-27T12:34:50.428
+       2023-03-27T12:34:50.428
 2023-03-27T12:34:50.524
 2023-03-27T12:34:50.524
 2023-03-27T12:34:50.524
@@ -375,14 +374,14 @@ Create embeddings
 - `api_key::String`: OpenAI API key
 - `input`: The input text to generate the embedding(s) for, as String or array of tokens.
     To get embeddings for multiple inputs in a single request, pass an array of strings
-    or array of token arrays. Each input must not exceed 8192 tokens in length.
-- `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
-
-# Keyword Arguments:
-- `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
-
-For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/embeddings>
-"""
+        or array of token arrays. Each input must not exceed 8192 tokens in length.
+        - `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
+        
+        # Keyword Arguments:
+        - `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
+        
+        For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/embeddings>
+        """
 function create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
     return openai_request("embeddings", api_key; method="POST", http_kwargs=http_kwargs, model=model_id, input, kwargs...)
 end
@@ -420,7 +419,7 @@ end
 # Arguments:
 - `provider::OpenAIProvider`: OpenAI provider object.
 - `numofdays::Int`: Optional. Defaults to 99. The number of days to get usage status for.
-   Note that the maximum `numofdays` is 99.
+Note that the maximum `numofdays` is 99.
 
 # Returns:
 - `quota`: The total quota for the subscription.(unit: USD)
@@ -487,6 +486,8 @@ function get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
     return (; quota, usage, daily_costs)
 end
 
+include("assistants.jl")
+
 export OpenAIResponse
 export list_models
 export retrieve_model
@@ -506,16 +507,22 @@ export modify_assistant
 
 # Thread exports
 export create_thread
-export get_thread
+export retrieve_thread
 export delete_thread
 export modify_thread
 
 # Message exports
 export create_message
 export list_messages
-export get_message
+export retrieve_message
 export delete_message
 export modify_message
 
+# Run exports
+export create_run
+export list_runs
+export retrieve_run
+export delete_run
+export modify_run
 
 end # module
