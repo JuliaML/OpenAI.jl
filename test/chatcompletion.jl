@@ -1,21 +1,20 @@
 @testset "chatcompletion" begin
-    r = create_chat(
-        ENV["OPENAI_API_KEY"],
+    r = create_chat(ENV["OPENAI_API_KEY"],
         "gpt-3.5-turbo",
-        [Dict("role" => "user", "content" => "What is the OpenAI mission?")]
-    )
+        [Dict("role" => "user", "content" => "What is the OpenAI mission?")])
     println(r.response["choices"][begin]["message"]["content"])
     if !=(r.status, 200)
         @test false
     end
 
     # with http kwargs (with default values)
-    r = create_chat(
-        ENV["OPENAI_API_KEY"],
+    r = create_chat(ENV["OPENAI_API_KEY"],
         "gpt-3.5-turbo",
-        [Dict("role" => "user", "content" => "Summarize HTTP.jl package in a short sentence.")],
-        http_kwargs=(connect_timeout=10, readtimeout=0)
-    )
+        [
+            Dict("role" => "user",
+                "content" => "Summarize HTTP.jl package in a short sentence."),
+        ],
+        http_kwargs = (connect_timeout = 10, readtimeout = 0))
     println(r.response["choices"][begin]["message"]["content"])
     if !=(r.status, 200)
         @test false
@@ -23,12 +22,13 @@
 end
 
 @testset "chatcompletion - streaming" begin
-
-    r = create_chat(
-        ENV["OPENAI_API_KEY"],
+    r = create_chat(ENV["OPENAI_API_KEY"],
         "gpt-3.5-turbo",
-        [Dict("role" => "user", "content" => "What continent is New York in? Two word answer.")],
-        streamcallback=let
+        [
+            Dict("role" => "user",
+                "content" => "What continent is New York in? Two word answer."),
+        ],
+        streamcallback = let
             count = 0
 
             function f(s::String)
