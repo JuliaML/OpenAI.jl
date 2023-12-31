@@ -4,12 +4,12 @@ using Pkg
 using Test
 
 function get_pkg_version(name::AbstractString)
-  for dep in values(Pkg.dependencies())
-    if dep.name == name
-      return dep.version
+    for dep in values(Pkg.dependencies())
+        if dep.name == name
+            return dep.version
+        end
     end
-  end
-  return error("Dependency not available")
+    return error("Dependency not available")
 end
 
 # @testset "Code quality (JET.jl)" begin
@@ -19,26 +19,25 @@ end
 #   end
 # end
 
-
 @testset "OpenAI.jl" begin
-  printstyled(color=:blue, "\n")
-  @testset "models" begin
-    include("models.jl")
-  end
-  @testset "chatcompletion" begin
-    include("chatcompletion.jl")
-  end
-  @testset "completion" begin
-    include("completion.jl")
-  end
-  @testset "embeddings" begin
-    include("embeddings.jl")
-  end
-  @testset "assistants" begin
-    include("assistants.jl")
-  end
-  # https://github.com/JuliaML/OpenAI.jl/issues/46
-  # @testset "usage" begin
-  #   include("usage.jl")
-  # end  
+    printstyled(color = :blue, "\n")
+    @testset "models" begin
+        include("models.jl")
+    end
+    @testset "chatcompletion" begin
+        include("chatcompletion.jl")
+    end
+    @testset "completion" begin
+        include("completion.jl")
+    end
+    @testset "embeddings" begin
+        include("embeddings.jl")
+    end
+    @testset "assistants" begin
+        include("assistants.jl")
+    end
+    # https://github.com/JuliaML/OpenAI.jl/issues/46
+    # @testset "usage" begin
+    #   include("usage.jl")
+    # end  
 end
