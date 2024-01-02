@@ -1,6 +1,9 @@
 
 # OpenAI API wrapper for Julia (Unofficial)
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaml.github.io/OpenAI.jl/stable/)
+[![In Development](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaml.github.io/OpenAI.jl/dev/)
+
 ## Overview
 
 Provides a community maintained Julia wrapper to the OpenAI API.
