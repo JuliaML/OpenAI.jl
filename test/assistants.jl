@@ -183,6 +183,7 @@ end
     @test new_run.response.id in ids
 
     # modify the run
+    sleep(4) # wait until run is complete
     modded_run = modify_run(api_key,
         thread.response.id,
         new_run.response.id,
