@@ -77,7 +77,6 @@ end
 
 function request_body(url, method; input, headers, query, kwargs...)
     input = isnothing(input) ? [] : input
-    query = isnothing(query) ? [] : query
 
     resp = HTTP.request(method,
         url;

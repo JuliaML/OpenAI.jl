@@ -1,3 +1,12 @@
+### 0.9.1
+
+* Fixed a bug in `request_body` that prevented `query` argument from being passed to `HTTP.jl`.
+* Updated completion model in the unit tests suite (`ada` series has been deprecated).
+
+### 0.9.0
+
+* Added OpenAI Assistants API
+
 ### 0.8.7
 
 * disable `test/usage.jl` in `test/runtests.jl` to close issue: https://github.com/JuliaML/OpenAI.jl/issues/46
