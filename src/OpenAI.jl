@@ -392,6 +392,8 @@ end
 """
 Create edit
 
+Note: This functionality is not accessible via API anymore -- see https://platform.openai.com/docs/deprecations
+
 # Arguments:
 - `api_key::String`: OpenAI API key
 - `model_id::String`: Model id (e.g. "text-davinci-edit-001")
@@ -409,6 +411,7 @@ function create_edit(api_key::String,
     instruction::String;
     http_kwargs::NamedTuple = NamedTuple(),
     kwargs...)
+    @warn "This functionality is not accessible via API anymore -- see https://platform.openai.com/docs/deprecations"
     return openai_request("edits",
         api_key;
         method = "POST",

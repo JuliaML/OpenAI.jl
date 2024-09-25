@@ -2,6 +2,7 @@
 
 * Fixed a bug in `request_body` that prevented `query` argument from being passed to `HTTP.jl`.
 * Updated completion model in the unit tests suite (`ada` series has been deprecated).
+* Added warnings to `create_edit` that it's deprecated by OpenAI. Disabled tests for `get_usage_status` and `create_edit` functions, as they cannot be tested via API.
 
 ### 0.9.0
 
