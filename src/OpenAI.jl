@@ -398,10 +398,10 @@ Create embeddings
     To get embeddings for multiple inputs in a single request, pass an array of strings
         or array of token arrays. Each input must not exceed 8192 tokens in length.
         - `model_id::String`: Model id. Defaults to $DEFAULT_EMBEDDING_MODEL_ID.
-        
+
         # Keyword Arguments:
         - `http_kwargs::NamedTuple`: Optional. Keyword arguments to pass to HTTP.request.
-        
+
         For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/embeddings>
         """
 function create_embeddings(api_key::String,
@@ -421,7 +421,7 @@ end
 """
 Create images
 
-# Arguments: 
+# Arguments:
 - `api_key::String`: OpenAI API key
 - `prompt`: The input text to generate the image(s) for, as String or array of tokens.
 - `n::Integer`: Optional. The number of images to generate. Must be between 1 and 10.
@@ -433,8 +433,8 @@ Create images
 
 For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/images/create>
 
-# once the request is made, 
-download like this: 
+# once the request is made,
+download like this:
 `download(r.response["data"][begin]["url"], "image.png")`
 """
 function create_images(api_key::String,
@@ -451,83 +451,6 @@ function create_images(api_key::String,
         kwargs...)
 end
 
-"""
-    get_usage_status(provider::OpenAIProvider; numofdays::Int=99)
-
-    NOTE: currently this endpoint can only be used from the browser. See https://github.com/JuliaML/OpenAI.jl/issues/46
-
-    Get usage status for the last `numofdays` days.
-
-# Arguments:
-- `provider::OpenAIProvider`: OpenAI provider object.
-- `numofdays::Int`: Optional. Defaults to 99. The number of days to get usage status for.
-Note that the maximum `numofdays` is 99.
-
-# Returns:
-- `quota`: The total quota for the subscription.(unit: USD)
-- `usage`: The total usage for the subscription.(unit: USD)
-- `daily_costs`: The daily costs for the subscription.
-
-Each element of `daily_costs` looks like this:
-```
-{
-    "timestamp": 1681171200,
-   "line_items": [
-                   {
-                      "name": "Instruct models",
-                      "cost": 0
-                   },
-                   {
-                      "name": "Chat models",
-                      "cost": 0
-                   },
-                   {
-                      "name": "GPT-4",
-                      "cost": 0
-                   },
-                   {
-                      "name": "Fine-tuned models",
-                      "cost": 0
-                   },
-                   {
-                      "name": "Embedding models",
-                      "cost": 0
-                   },
-                   {
-                      "name": "Image models",
-                      "cost": 0
-                   },
-                   {
-                      "name": "Audio models",
-                      "cost": 0
-                   }
-                 ]
-}
-```
-"""
-function get_usage_status(provider::OpenAIProvider; numofdays::Int = 99)
-    (; base_url, api_key) = provider
-    isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
-    numofdays > 99 && throw(ArgumentError("numofdays cannot be greater than 99"))
-
-    # Get total quota from subscription_url
-    subscription_url = "$base_url/dashboard/billing/subscription"
-    subscrip = HTTP.get(subscription_url, headers = auth_header(provider))
-    resp = OpenAIResponse(subscrip.status, JSON3.read(subscrip.body))
-    # TODO: catch error
-    quota = resp.response.hard_limit_usd
-
-    # Get usage status from billing_url
-    start_date = today()
-    end_date = today() + Day(numofdays)
-    billing_url = "$base_url/dashboard/billing/usage?start_date=$(start_date)&end_date=$(end_date)"
-    billing = HTTP.get(billing_url, headers = auth_header(provider))
-    resp = OpenAIResponse(billing.status, JSON3.read(billing.body))
-    usage = resp.response.total_usage / 100
-    daily_costs = resp.response.daily_costs
-    return (; quota, usage, daily_costs)
-end
-
 include("assistants.jl")
 
 export OpenAIResponse
@@ -537,7 +460,6 @@ export create_chat
 export create_completion
 export create_embeddings
 export create_images
-export get_usage_status
 
 # Assistant exports
 export list_assistants

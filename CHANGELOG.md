@@ -1,6 +1,6 @@
 ### 0.10.0
 
-* Removed deprecated features `create_edit` and `get_usage_statistics`
+* Removed deprecated features `create_edit` and `get_usage_status`
 
 ### 0.9.1
 
