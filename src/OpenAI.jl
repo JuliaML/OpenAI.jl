@@ -390,38 +390,6 @@ function create_chat(provider::AbstractOpenAIProvider,
 end
 
 """
-Create edit
-
-Note: This functionality is not accessible via API anymore -- see https://platform.openai.com/docs/deprecations
-
-# Arguments:
-- `api_key::String`: OpenAI API key
-- `model_id::String`: Model id (e.g. "text-davinci-edit-001")
-- `instruction::String`: The instruction that tells the model how to edit the prompt.
-- `input::String` (optional): The input text to use as a starting point for the edit.
-- `n::Int` (optional): How many edits to generate for the input and instruction.
-
-# Keyword Arguments:
-- `http_kwargs::NamedTuple` (optional): Keyword arguments to pass to HTTP.request.
-
-For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/edits>
-"""
-function create_edit(api_key::String,
-    model_id::String,
-    instruction::String;
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
-    @warn "This functionality is not accessible via API anymore -- see https://platform.openai.com/docs/deprecations"
-    return openai_request("edits",
-        api_key;
-        method = "POST",
-        http_kwargs = http_kwargs,
-        model = model_id,
-        instruction,
-        kwargs...)
-end
-
-"""
 Create embeddings
 
 # Arguments:
@@ -567,7 +535,6 @@ export list_models
 export retrieve_model
 export create_chat
 export create_completion
-export create_edit
 export create_embeddings
 export create_images
 export get_usage_status

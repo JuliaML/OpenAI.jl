@@ -17,10 +17,6 @@ create_chat
 ```
 
 ```@docs
-create_edit(api_key::String, model_id::String, instruction::String; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
-```
-
-```@docs
 create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MODEL_ID; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
 ```
 

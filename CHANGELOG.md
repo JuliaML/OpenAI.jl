@@ -1,3 +1,7 @@
+### 0.10.0
+
+* Removed deprecated features `create_edit` and `get_usage_statistics`
+
 ### 0.9.1
 
 * Fixed a bug in `request_body` that prevented `query` argument from being passed to `HTTP.jl`.

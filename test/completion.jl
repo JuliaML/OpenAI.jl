@@ -11,17 +11,3 @@
         @test false
     end
 end
-
-# This functionality is not accessible via API anymore -- see https://platform.openai.com/docs/deprecations
-@test_skip begin
-    @testset "create edit" begin
-        r = create_edit(ENV["OPENAI_API_KEY"],
-            "gpt-3.5-turbo-instruct",
-            "Fix this piece of text for grammatical errors",
-            input = "I hav ben riting sence i wuz 5")
-        println(r.response["choices"][begin]["text"])
-        if !=(r.status, 200)
-            @test false
-        end
-    end
-end
