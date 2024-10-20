@@ -57,7 +57,7 @@ provider = OpenAI.OpenAIProvider(
 )
 response = create_chat(
     provider,
-    "gpt-40-mini",
+    "gpt-4o-mini",
     [Dict("role" => "user", "content" => "Write some ancient Greek poetry")]
 )
 ```
