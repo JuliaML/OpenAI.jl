@@ -312,7 +312,7 @@ For more details about the endpoint and additional arguments, visit <https://pla
 ## Example:
 
 ```julia
-julia> CC = create_chat("..........", "gpt-3.5-turbo", 
+julia> CC = create_chat("..........", "gpt-4o-mini", 
     [Dict("role" => "user", "content"=> "What is the OpenAI mission?")]
 );
 
@@ -330,7 +330,7 @@ The response body will reflect the chunked nature of the response, so some reass
 message returned by the API.
 
 ```julia
-julia> CC = create_chat(key, "gpt-3.5-turbo",
+julia> CC = create_chat(key, "gpt-4o-mini",
            [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
        streamcallback = x->println(Dates.now()));
        2023-03-27T12:34:50.428

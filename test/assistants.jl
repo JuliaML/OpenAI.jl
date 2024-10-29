@@ -32,7 +32,7 @@
 
 # Set API/model
 api_key = ENV["OPENAI_API_KEY"]
-test_model = "gpt-3.5-turbo"
+test_model = "gpt-4o-mini"
 
 # Test functions for the assistant generation/modification/etc.
 @testset "Assistants" begin
