@@ -1,3 +1,7 @@
+### 0.10.1
+
+* Updated example model 
+
 ### 0.10.0
 
 * Removed deprecated features `create_edit` and `get_usage_status`
