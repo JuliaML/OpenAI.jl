@@ -417,7 +417,20 @@ function create_embeddings(api_key::String,
         input,
         kwargs...)
 end
-
+function create_embeddings(provider::AbstractOpenAIProvider,
+    input;
+    model_id::String = DEFAULT_EMBEDDING_MODEL_ID,   
+    http_kwargs::NamedTuple=NamedTuple(),
+    streamcallback=nothing,
+    kwargs...)
+    return OpenAI.openai_request("embeddings",
+        provider;
+        method="POST",
+        http_kwargs=http_kwargs,
+        model=model_id,
+        input,
+        kwargs...)
+end
 """
 Create images
 
