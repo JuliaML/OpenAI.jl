@@ -532,8 +532,14 @@ response = create_responses(api_key, "How much wood would a woodchuck chuck?";
 ```
 
 """
-function create_responses(api_key::String, input, model="gpt-4o-mini"; kwargs...)
-    return openai_request("responses", api_key; method = "POST", input = input, model=model, kwargs...)
+function create_responses(api_key::String, input, model="gpt-4o-mini"; http_kwargs::NamedTuple = NamedTuple(), kwargs...)
+    return openai_request("responses", 
+                            api_key; 
+                            method = "POST", 
+                            input = input, 
+                            model=model, 
+                            http_kwargs = http_kwargs,
+                            kwargs...)
 end
 
 export OpenAIResponse
