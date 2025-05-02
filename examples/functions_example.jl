@@ -19,4 +19,6 @@ tools = [
         )
     )
 ]
-resp = create_responses(ENV["OPENAI_API_KEY"], "What is the avg temp in Boston?"; tools=tools, tool_choice="auto")
+resp = create_responses(ENV["OPENAI_API_KEY"], "What is the avg temp in New York?"; tools=tools, tool_choice="auto")
+
+resp.response.output
