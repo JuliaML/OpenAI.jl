@@ -100,7 +100,10 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
             r = HTTP.startread(stream) # start reading the response
             isdone = false
 
-            while !eof(stream) || !isdone
+            while !isdone
+                if eof(stream)
+                    break
+                end
                 # Extract all available messages
                 masterchunk = String(readavailable(stream))
 
@@ -114,6 +117,7 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
                 for chunk in chunks
                     if occursin(chunk, "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
                         isdone = true
+                        break
                     end
 
                     # call the callback (if present) on the latest chunk
@@ -180,14 +184,14 @@ function _request(api::AbstractString,
         return if isnothing(streamcallback)
             OpenAIResponse(resp.status, JSON3.read(body))
         else
-            # assemble the streaming response body into a proper JSON object
-            lines = split(body, "\n") # split body into lines
+            # Assemble the streaming response body into a proper JSON object
+            lines = split(body, "\n")  # Split body into lines
 
-            # throw out empty lines, skip "data: [DONE] bits
-            lines = filter(x -> !isempty(x) && !occursin("[DONE]", x), lines)
+            # Filter out empty lines and lines that are not JSON (e.g., "event: ...")
+            lines = filter(x -> !isempty(x) && startswith(x, "data: "), lines)
 
-            # read each line, which looks like "data: {<json elements>}"
-            parsed = map(line -> JSON3.read(line[6:end]), lines)
+            # Parse each line, removing the "data: " prefix
+            parsed = map(line -> JSON3.read(line[7:end]), lines)
 
             OpenAIResponse(resp.status, parsed)
         end
