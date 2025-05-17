@@ -100,7 +100,10 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
             r = HTTP.startread(stream) # start reading the response
             isdone = false
 
-            while !eof(stream) || !isdone
+            while !isdone
+                if eof(stream)
+                    break
+                end
                 # Extract all available messages
                 masterchunk = String(readavailable(stream))
 
@@ -114,6 +117,7 @@ function request_body_live(url; method, input, headers, streamcallback, kwargs..
                 for chunk in chunks
                     if occursin(chunk, "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
                         isdone = true
+                        break
                     end
 
                     # call the callback (if present) on the latest chunk
@@ -180,14 +184,14 @@ function _request(api::AbstractString,
         return if isnothing(streamcallback)
             OpenAIResponse(resp.status, JSON3.read(body))
         else
-            # assemble the streaming response body into a proper JSON object
-            lines = split(body, "\n") # split body into lines
+            # Assemble the streaming response body into a proper JSON object
+            lines = split(body, "\n")  # Split body into lines
 
-            # throw out empty lines, skip "data: [DONE] bits
-            lines = filter(x -> !isempty(x) && !occursin("[DONE]", x), lines)
+            # Filter out empty lines and lines that are not JSON (e.g., "event: ...")
+            lines = filter(x -> !isempty(x) && startswith(x, "data: "), lines)
 
-            # read each line, which looks like "data: {<json elements>}"
-            parsed = map(line -> JSON3.read(line[6:end]), lines)
+            # Parse each line, removing the "data: " prefix
+            parsed = map(line -> JSON3.read(line[7:end]), lines)
 
             OpenAIResponse(resp.status, parsed)
         end
@@ -466,6 +470,82 @@ end
 
 include("assistants.jl")
 
+
+"""
+Create responses
+
+https://platform.openai.com/docs/api-reference/responses/create
+
+# Arguments:
+- `api_key::String`: OpenAI API key
+- `input`: The input text to generate the response(s) for, as String or Dict.
+    To get responses for multiple inputs in a single request, pass an array of strings
+    or array of token arrays. Each input must not exceed 8192 tokens in length.
+- `model::String`: Model id. Defaults to "gpt-4o-mini".
+- `kwargs...`: Additional arguments to pass to the API.
+    - `tools::Int`: The number of responses to generate for the input. Defaults to 1.
+
+# Examples: 
+```julia
+
+## Image input
+input = [Dict("role" => "user", 
+    "content" => [Dict("type" => "input_text", "text" => "What is in this image?"), 
+                 Dict("type" => "input_image", "image_url" => "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg")])
+            ]
+create_responses(api_key, input)
+
+## Web search 
+create_responses(api_key, "What was a positive news story from today?"; tools=[Dict("type" => "web_search_preview")])
+
+## File search - fails because example vector store does not exist
+tools = [Dict("type" => "file_search",
+      "vector_store_ids" => ["vs_1234567890"],
+      "max_num_results" => 20)]
+create_responses(api_key, "What are the attributes of an ancient brown dragon?"; tools=tools)
+
+## Streaming 
+resp = create_responses(api_key, "Hello!"; instructions="You are a helpful assistant.", stream=true, streamcallback = x->println(x))
+
+## Functions 
+tools = [
+    Dict(
+        "type" => "function",
+        "name" => "get_current_weather",
+        "description" => "Get the current weather in a given location",
+        "parameters" => Dict(
+          "type" => "object",
+          "properties" => Dict(
+              "location" => Dict(
+                  "type" => "string",
+                  "description" => "The city and state, e.g. San Francisco, CA",
+              ),
+            "unit"=> Dict("type" => "string", "enum" => ["celsius", "fahrenheit"]),
+          ),
+          "required" => ["location", "unit"],
+        )
+    )
+]
+resp = create_responses(api_key, "What is the weather in Boston?"; tools=tools, tool_choice="auto")
+
+## Reasoning 
+
+response = create_responses(api_key, "How much wood would a woodchuck chuck?";
+    model = "o3-mini",
+    reasoning=Dict("effort" => "high"))
+```
+
+"""
+function create_responses(api_key::String, input, model="gpt-4o-mini"; http_kwargs::NamedTuple = NamedTuple(), kwargs...)
+    return openai_request("responses", 
+                            api_key; 
+                            method = "POST", 
+                            input = input, 
+                            model=model, 
+                            http_kwargs = http_kwargs,
+                            kwargs...)
+end
+
 export OpenAIResponse
 export list_models
 export retrieve_model
@@ -500,5 +580,6 @@ export list_runs
 export retrieve_run
 export delete_run
 export modify_run
+export create_responses
 
 end # module
