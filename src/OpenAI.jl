@@ -555,11 +555,11 @@ export create_embeddings
 export create_images
 
 # Assistant exports
-export list_assistants
-export create_assistant
-export get_assistant
-export delete_assistant
-export modify_assistant
+# export list_assistants
+# export create_assistant
+# export get_assistant
+# export delete_assistant
+# export modify_assistant
 
 # Thread exports
 export create_thread
