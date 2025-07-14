@@ -1,6 +1,11 @@
+### 0.11.0
+
+* Add support for image generation and responses endpoints (#69)
+* Disable Assistants API until functionality is updated to match the server side
+
 ### 0.10.1
 
-* Updated example model 
+* Updated example model
 
 ### 0.10.0
 
