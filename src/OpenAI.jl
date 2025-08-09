@@ -3,6 +3,7 @@ module OpenAI
 using JSON3
 using HTTP
 using Dates
+using StreamCallbacks
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -223,6 +224,22 @@ function openai_request(api::AbstractString,
     _request(api, provider; method, http_kwargs, streamcallback = streamcallback, kwargs...)
 end
 
+"""
+    configure_callback!(streamcallback, schema; kwargs...)
+
+Configure a streaming callback for OpenAI APIs. If `streamcallback` is an IO or
+Channel, a new `StreamCallback` is created. The callback flavor defaults to
+`OpenAIStream` and streaming-related keyword arguments are appended to
+`kwargs`.
+Returns the configured callback and updated keyword arguments.
+"""
+function configure_callback!(streamcallback, schema; kwargs...)
+    cb = streamcallback isa StreamCallback ? streamcallback : StreamCallback(out = streamcallback)
+    isnothing(cb.flavor) && (cb.flavor = OpenAIStream())
+    new_kwargs = (; kwargs..., stream = true, stream_options = (; include_usage = true))
+    return cb, new_kwargs
+end
+
 struct OpenAIResponse{R}
     status::Int16
     response::R
@@ -391,6 +408,41 @@ function create_chat(provider::AbstractOpenAIProvider,
         messages = messages,
         streamcallback = streamcallback,
         kwargs...)
+end
+
+"""
+    create_chat(schema, api_key, model, conversation; http_kwargs=NamedTuple(),
+                streamcallback=nothing, kwargs...)
+
+Fallback-compatible method that integrates `StreamCallbacks.jl`. When a
+`streamcallback` is provided that is *not* a plain function, the request is
+handled via `StreamCallbacks.streamed_request!` with the callback configured by
+`configure_callback!`.
+"""
+function create_chat(schema,
+    api_key::AbstractString,
+    model::AbstractString,
+    conversation;
+    provider = DEFAULT_PROVIDER,
+    http_kwargs::NamedTuple = NamedTuple(),
+    streamcallback::Any = nothing,
+    kwargs...)
+    if !isnothing(streamcallback) && !(streamcallback isa Function)
+        url = build_url(provider, "chat/completions")
+        headers = auth_header(provider, api_key)
+        streamcallback, new_kwargs = configure_callback!(streamcallback, schema; kwargs...)
+        input = build_params((; messages = conversation, model, new_kwargs...))
+        resp = streamed_request!(streamcallback, url, headers, input; http_kwargs...)
+        return OpenAIResponse(resp.status, JSON3.read(resp.body))
+    else
+        return _request("chat/completions", provider, api_key;
+            method = "POST",
+            http_kwargs = http_kwargs,
+            streamcallback = streamcallback,
+            model = model,
+            messages = conversation,
+            kwargs...)
+    end
 end
 
 """

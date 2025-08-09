@@ -21,17 +21,24 @@ end
 
 @testset "OpenAI.jl" begin
     printstyled(color = :blue, "\n")
-    @testset "models" begin
-        include("models.jl")
+    if haskey(ENV, "OPENAI_API_KEY")
+        @testset "models" begin
+            include("models.jl")
+        end
+        @testset "chatcompletion" begin
+            include("chatcompletion.jl")
+        end
+        @testset "completion" begin
+            include("completion.jl")
+        end
+        @testset "embeddings" begin
+            include("embeddings.jl")
+        end
+    else
+        @info "OPENAI_API_KEY not set; skipping live API tests"
     end
-    @testset "chatcompletion" begin
-        include("chatcompletion.jl")
-    end
-    @testset "completion" begin
-        include("completion.jl")
-    end
-    @testset "embeddings" begin
-        include("embeddings.jl")
+    @testset "streamcallbacks" begin
+        include("streamcallbacks.jl")
     end
     # @testset "assistants" begin
     #     include("assistants.jl")
