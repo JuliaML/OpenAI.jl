@@ -32,7 +32,7 @@
 
 # Set API/model
 api_key = ENV["OPENAI_API_KEY"]
-test_model = "gpt-4o-mini"
+test_model = "gpt-5-mini"
 
 # Test functions for the assistant generation/modification/etc.
 @testset "Assistants" begin
@@ -158,7 +158,7 @@ end
     # Make a thread
     thread = create_thread(api_key,
         [
-            Dict("role" => "user", "content" => "Hello, how are you?"),
+            Dict("role" => "user", "content" => "Hello, how are you?")
         ])
 
     # Make a run
