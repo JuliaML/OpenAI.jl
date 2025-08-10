@@ -12,7 +12,7 @@
         "gpt-4o-mini",
         [
             Dict("role" => "user",
-                "content" => "Summarize HTTP.jl package in a short sentence."),
+            "content" => "Summarize HTTP.jl package in a short sentence."),
         ],
         http_kwargs = (connect_timeout = 10, readtimeout = 0))
     println(r.response["choices"][begin]["message"]["content"])
@@ -26,7 +26,7 @@ end
         "gpt-4o-mini",
         [
             Dict("role" => "user",
-                "content" => "What continent is New York in? Two word answer."),
+            "content" => "What continent is New York in? Two word answer."),
         ],
         streamcallback = let
             count = 0

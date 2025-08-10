@@ -50,14 +50,14 @@ function auth_header(::OpenAIProvider, api_key::AbstractString)
     isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "Authorization" => "Bearer $api_key",
-        "Content-Type" => "application/json",
+        "Content-Type" => "application/json"
     ]
 end
 function auth_header(::AzureProvider, api_key::AbstractString)
     isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "api-key" => api_key,
-        "Content-Type" => "application/json",
+        "Content-Type" => "application/json"
     ]
 end
 
@@ -108,14 +108,14 @@ function status_error(resp, log = nothing)
 end
 
 function _request(api::AbstractString,
-    provider::AbstractOpenAIProvider,
-    api_key::AbstractString = provider.api_key;
-    method,
-    query = nothing,
-    http_kwargs,
-    streamcallback = nothing,
-    additional_headers::AbstractVector = Pair{String, String}[],
-    kwargs...)
+        provider::AbstractOpenAIProvider,
+        api_key::AbstractString = provider.api_key;
+        method,
+        query = nothing,
+        http_kwargs,
+        streamcallback = nothing,
+        additional_headers::AbstractVector = Pair{String, String}[],
+        kwargs...)
     cb = nothing
     if !isnothing(streamcallback)
         cb, kwargs = configure_callback!(streamcallback; kwargs...)
@@ -126,14 +126,16 @@ function _request(api::AbstractString,
     headers = vcat(auth_header(provider, api_key), additional_headers)
 
     if isnothing(cb)
-        resp, body = request_body(url,
+        resp,
+        body = request_body(url,
             method;
             input = params,
             headers = headers,
             query = query,
             http_kwargs...)
     else
-        resp, body = request_body_live(url;
+        resp,
+        body = request_body_live(url;
             method,
             input = params,
             headers = headers,
@@ -149,11 +151,11 @@ function _request(api::AbstractString,
 end
 
 function openai_request(api::AbstractString,
-    api_key::AbstractString;
-    method,
-    http_kwargs,
-    streamcallback = nothing,
-    kwargs...)
+        api_key::AbstractString;
+        method,
+        http_kwargs,
+        streamcallback = nothing,
+        kwargs...)
     global DEFAULT_PROVIDER
     _request(api,
         DEFAULT_PROVIDER,
@@ -165,11 +167,11 @@ function openai_request(api::AbstractString,
 end
 
 function openai_request(api::AbstractString,
-    provider::AbstractOpenAIProvider;
-    method,
-    http_kwargs,
-    streamcallback = nothing,
-    kwargs...)
+        provider::AbstractOpenAIProvider;
+        method,
+        http_kwargs,
+        streamcallback = nothing,
+        kwargs...)
     _request(api, provider; method, http_kwargs, streamcallback = streamcallback, kwargs...)
 end
 
@@ -182,7 +184,8 @@ Streaming-related keyword arguments are added to `kwargs`.
 Returns the configured callback and updated keyword arguments.
 """
 function configure_callback!(streamcallback; kwargs...)
-    cb = streamcallback isa StreamCallback ? streamcallback : StreamCallback(out = streamcallback)
+    cb = streamcallback isa StreamCallback ? streamcallback :
+         StreamCallback(out = streamcallback)
     isnothing(cb.flavor) && (cb.flavor = OpenAIStream())
     new_kwargs = (; kwargs..., stream = true, stream_options = (; include_usage = true))
     return cb, new_kwargs
@@ -221,8 +224,8 @@ Retrieve model
 For additional details, visit <https://platform.openai.com/docs/api-reference/models/retrieve>
 """
 function retrieve_model(api_key::String,
-    model_id::String;
-    http_kwargs::NamedTuple = NamedTuple())
+        model_id::String;
+        http_kwargs::NamedTuple = NamedTuple())
     return openai_request("models/$(model_id)",
         api_key;
         method = "GET",
@@ -246,9 +249,9 @@ For more details about the endpoint and additional arguments, visit <https://pla
 - `http_kwargs::NamedTuple=NamedTuple()`: Keyword arguments to pass to HTTP.request (e. g., `http_kwargs=(connection_timeout=2,)` to set a connection timeout of 2 seconds).
 """
 function create_completion(api_key::String,
-    model_id::String;
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        model_id::String;
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("completions",
         api_key;
         method = "POST",
@@ -328,11 +331,11 @@ julia> map(r->r["choices"][1]["delta"], CC.response)
 ```
 """
 function create_chat(api_key::String,
-    model_id::String,
-    messages;
-    http_kwargs::NamedTuple = NamedTuple(),
-    streamcallback = nothing,
-    kwargs...)
+        model_id::String,
+        messages;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return openai_request("chat/completions",
         api_key;
         method = "POST",
@@ -343,11 +346,11 @@ function create_chat(api_key::String,
         kwargs...)
 end
 function create_chat(provider::AbstractOpenAIProvider,
-    model_id::String,
-    messages;
-    http_kwargs::NamedTuple = NamedTuple(),
-    streamcallback = nothing,
-    kwargs...)
+        model_id::String,
+        messages;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return openai_request("chat/completions",
         provider;
         method = "POST",
@@ -366,12 +369,12 @@ Convenience overload for testing/debugging that forwards to `create_chat` with
 support for `StreamCallback` objects.
 """
 function create_chat(schema,
-    api_key::AbstractString,
-    model::AbstractString,
-    conversation;
-    http_kwargs::NamedTuple = NamedTuple(),
-    streamcallback::Any = nothing,
-    kwargs...)
+        api_key::AbstractString,
+        model::AbstractString,
+        conversation;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback::Any = nothing,
+        kwargs...)
     return create_chat(api_key, model, conversation;
         http_kwargs = http_kwargs,
         streamcallback = streamcallback,
@@ -394,10 +397,10 @@ Create embeddings
         For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/embeddings>
         """
 function create_embeddings(api_key::String,
-    input,
-    model_id::String = DEFAULT_EMBEDDING_MODEL_ID;
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        input,
+        model_id::String = DEFAULT_EMBEDDING_MODEL_ID;
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("embeddings",
         api_key;
         method = "POST",
@@ -407,16 +410,16 @@ function create_embeddings(api_key::String,
         kwargs...)
 end
 function create_embeddings(provider::AbstractOpenAIProvider,
-    input;
-    model_id::String = DEFAULT_EMBEDDING_MODEL_ID,   
-    http_kwargs::NamedTuple=NamedTuple(),
-    streamcallback=nothing,
-    kwargs...)
+        input;
+        model_id::String = DEFAULT_EMBEDDING_MODEL_ID,
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return OpenAI.openai_request("embeddings",
         provider;
-        method="POST",
-        http_kwargs=http_kwargs,
-        model=model_id,
+        method = "POST",
+        http_kwargs = http_kwargs,
+        model = model_id,
         input,
         kwargs...)
 end
@@ -440,11 +443,11 @@ download like this:
 `download(r.response["data"][begin]["url"], "image.png")`
 """
 function create_images(api_key::String,
-    prompt,
-    n::Integer = 1,
-    size::String = "256x256";
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        prompt,
+        n::Integer = 1,
+        size::String = "256x256";
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("images/generations",
         api_key;
         method = "POST",
@@ -454,7 +457,6 @@ function create_images(api_key::String,
 end
 
 include("assistants.jl")
-
 
 """
 Create responses
@@ -521,14 +523,15 @@ response = create_responses(api_key, "How much wood would a woodchuck chuck?";
 ```
 
 """
-function create_responses(api_key::String, input, model="gpt-4o-mini"; http_kwargs::NamedTuple = NamedTuple(), kwargs...)
-    return openai_request("responses", 
-                            api_key; 
-                            method = "POST", 
-                            input = input, 
-                            model=model, 
-                            http_kwargs = http_kwargs,
-                            kwargs...)
+function create_responses(api_key::String, input, model = "gpt-4o-mini";
+        http_kwargs::NamedTuple = NamedTuple(), kwargs...)
+    return openai_request("responses",
+        api_key;
+        method = "POST",
+        input = input,
+        model = model,
+        http_kwargs = http_kwargs,
+        kwargs...)
 end
 
 export OpenAIResponse
