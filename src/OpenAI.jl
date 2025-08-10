@@ -284,7 +284,7 @@ For more details about the endpoint and additional arguments, visit <https://pla
 ## Example:
 
 ```julia
-julia> CC = create_chat("..........", "gpt-4o-mini", 
+julia> CC = create_chat("..........", "gpt-5-mini", 
     [Dict("role" => "user", "content"=> "What is the OpenAI mission?")]
 );
 
@@ -302,7 +302,7 @@ The response body will reflect the chunked nature of the response, so some reass
 message returned by the API.
 
 ```julia
-julia> CC = create_chat(key, "gpt-4o-mini",
+julia> CC = create_chat(key, "gpt-5-mini",
            [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
        streamcallback = x->println(Dates.now()));
        2023-03-27T12:34:50.428
@@ -468,7 +468,7 @@ https://platform.openai.com/docs/api-reference/responses/create
 - `input`: The input text to generate the response(s) for, as String or Dict.
     To get responses for multiple inputs in a single request, pass an array of strings
     or array of token arrays. Each input must not exceed 8192 tokens in length.
-- `model::String`: Model id. Defaults to "gpt-4o-mini".
+- `model::String`: Model id. Defaults to "gpt-5-mini".
 - `kwargs...`: Additional arguments to pass to the API.
     - `tools::Int`: The number of responses to generate for the input. Defaults to 1.
 
@@ -523,7 +523,7 @@ response = create_responses(api_key, "How much wood would a woodchuck chuck?";
 ```
 
 """
-function create_responses(api_key::String, input, model = "gpt-4o-mini";
+function create_responses(api_key::String, input, model = "gpt-5-mini";
         http_kwargs::NamedTuple = NamedTuple(), kwargs...)
     return openai_request("responses",
         api_key;

@@ -28,7 +28,7 @@ __⚠️ We strongly suggest setting up your API key as an ENV variable__.
 
 ```julia
 secret_key = ENV["OPENAI_API_KEY"]
-model = "gpt-4o-mini"
+model = "gpt-5-mini"
 prompt =  "Say \"this is a test\""
 
 r = create_chat(
@@ -57,7 +57,7 @@ provider = OpenAI.OpenAIProvider(
 )
 response = create_chat(
     provider,
-    "gpt-4o-mini",
+    "gpt-5-mini",
     [Dict("role" => "user", "content" => "Write some ancient Greek poetry")]
 )
 ```

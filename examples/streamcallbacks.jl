@@ -2,7 +2,7 @@
 using OpenAI
 
 api_key = get(ENV, "OPENAI_API_KEY", "")
-model = "gpt-4o-mini"
+model = "gpt-5-mini"
 messages = [Dict("role" => "user", "content" => "Write a short haiku about streams.")]
 
 # 1. Stream to stdout (no differences)
