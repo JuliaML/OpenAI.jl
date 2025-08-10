@@ -21,23 +21,19 @@ end
 
 @testset "OpenAI.jl" begin
     printstyled(color = :blue, "\n")
-    if haskey(ENV, "OPENAI_API_KEY") && get(ENV, "OPENAI_RUN_LIVE_TESTS", "") == "true"
-        # Disable SSL verification in CI environments that inject self-signed certificates
-        ENV["JULIA_SSL_NO_VERIFY_HOSTS"] = "*"
-        @testset "models" begin
-            include("models.jl")
-        end
-        @testset "chatcompletion" begin
-            include("chatcompletion.jl")
-        end
-        @testset "completion" begin
-            include("completion.jl")
-        end
-        @testset "embeddings" begin
-            include("embeddings.jl")
-        end
-    else
-        @info "Skipping live API tests"
+    # Disable SSL verification in CI environments that inject self-signed certificates
+    ENV["JULIA_SSL_NO_VERIFY_HOSTS"] = "*"
+    @testset "models" begin
+        include("models.jl")
+    end
+    @testset "chatcompletion" begin
+        include("chatcompletion.jl")
+    end
+    @testset "completion" begin
+        include("completion.jl")
+    end
+    @testset "embeddings" begin
+        include("embeddings.jl")
     end
     @testset "streamcallbacks" begin
         include("streamcallbacks.jl")
