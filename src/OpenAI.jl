@@ -3,6 +3,16 @@ module OpenAI
 using JSON3
 using HTTP
 using Dates
+using StreamCallbacks: StreamCallback, OpenAIStream, streamed_request!
+import StreamCallbacks: print_content
+
+"""
+    print_content(f::Function, text::AbstractString; kwargs...)
+
+Allow plain functions to be used as streaming sinks. The provided function will
+receive each processed text chunk.
+"""
+print_content(f::Function, text::AbstractString; kwargs...) = f(text)
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -40,14 +50,14 @@ function auth_header(::OpenAIProvider, api_key::AbstractString)
     isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "Authorization" => "Bearer $api_key",
-        "Content-Type" => "application/json",
+        "Content-Type" => "application/json"
     ]
 end
 function auth_header(::AzureProvider, api_key::AbstractString)
     isempty(api_key) && throw(ArgumentError("api_key cannot be empty"))
     [
         "api-key" => api_key,
-        "Content-Type" => "application/json",
+        "Content-Type" => "application/json"
     ]
 end
 
@@ -88,52 +98,8 @@ function request_body(url, method; input, headers, query, kwargs...)
 end
 
 function request_body_live(url; method, input, headers, streamcallback, kwargs...)
-    resp = nothing
-
-    body = sprint() do output
-        resp = HTTP.open("POST", url, headers) do stream
-            body = String(take!(input))
-            write(stream, body)
-
-            HTTP.closewrite(stream)    # indicate we're done writing to the request
-
-            r = HTTP.startread(stream) # start reading the response
-            isdone = false
-
-            while !isdone
-                if eof(stream)
-                    break
-                end
-                # Extract all available messages
-                masterchunk = String(readavailable(stream))
-
-                # Split into subchunks on newlines.
-                # Occasionally, the streaming will append multiple messages together,
-                # and iterating through each line in turn will make sure that
-                # streamingcallback is called on each message in turn.
-                chunks = String.(filter(!isempty, split(masterchunk, "\n")))
-
-                # Iterate through each chunk in turn.
-                for chunk in chunks
-                    if occursin(chunk, "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
-                        isdone = true
-                        break
-                    end
-
-                    # call the callback (if present) on the latest chunk
-                    if !isnothing(streamcallback)
-                        streamcallback(chunk)
-                    end
-
-                    # append the latest chunk to the body
-                    print(output, chunk)
-                end
-            end
-            HTTP.closeread(stream)
-        end
-    end
-
-    return resp, body
+    resp = streamed_request!(streamcallback, url, headers, input; kwargs...)
+    return resp, resp.body
 end
 
 function status_error(resp, log = nothing)
@@ -142,68 +108,54 @@ function status_error(resp, log = nothing)
 end
 
 function _request(api::AbstractString,
-    provider::AbstractOpenAIProvider,
-    api_key::AbstractString = provider.api_key;
-    method,
-    query = nothing,
-    http_kwargs,
-    streamcallback = nothing,
-    additional_headers::AbstractVector = Pair{String, String}[],
-    kwargs...)
-    # add stream: True to the API call if a stream callback function is passed
+        provider::AbstractOpenAIProvider,
+        api_key::AbstractString = provider.api_key;
+        method,
+        query = nothing,
+        http_kwargs,
+        streamcallback = nothing,
+        additional_headers::AbstractVector = Pair{String, String}[],
+        kwargs...)
+    cb = nothing
     if !isnothing(streamcallback)
-        kwargs = (kwargs..., stream = true)
+        cb, kwargs = configure_callback!(streamcallback; kwargs...)
     end
 
     params = build_params(kwargs)
     url = build_url(provider, api)
-    resp, body = let
-        # Add whatever other headers we were given
-        headers = vcat(auth_header(provider, api_key), additional_headers)
+    headers = vcat(auth_header(provider, api_key), additional_headers)
 
-        if isnothing(streamcallback)
-            request_body(url,
-                method;
-                input = params,
-                headers = headers,
-                query = query,
-                http_kwargs...)
-        else
-            request_body_live(url;
-                method,
-                input = params,
-                headers = headers,
-                query = query,
-                streamcallback = streamcallback,
-                http_kwargs...)
-        end
+    if isnothing(cb)
+        resp,
+        body = request_body(url,
+            method;
+            input = params,
+            headers = headers,
+            query = query,
+            http_kwargs...)
+    else
+        resp,
+        body = request_body_live(url;
+            method,
+            input = params,
+            headers = headers,
+            streamcallback = cb,
+            http_kwargs...)
     end
+
     if resp.status >= 400
         status_error(resp, body)
     else
-        return if isnothing(streamcallback)
-            OpenAIResponse(resp.status, JSON3.read(body))
-        else
-            # Assemble the streaming response body into a proper JSON object
-            lines = split(body, "\n")  # Split body into lines
-
-            # Filter out empty lines and lines that are not JSON (e.g., "event: ...")
-            lines = filter(x -> !isempty(x) && startswith(x, "data: "), lines)
-
-            # Parse each line, removing the "data: " prefix
-            parsed = map(line -> JSON3.read(line[7:end]), lines)
-
-            OpenAIResponse(resp.status, parsed)
-        end
+        return OpenAIResponse(resp.status, JSON3.read(body))
     end
 end
 
 function openai_request(api::AbstractString,
-    api_key::AbstractString;
-    method,
-    http_kwargs,
-    streamcallback = nothing,
-    kwargs...)
+        api_key::AbstractString;
+        method,
+        http_kwargs,
+        streamcallback = nothing,
+        kwargs...)
     global DEFAULT_PROVIDER
     _request(api,
         DEFAULT_PROVIDER,
@@ -215,12 +167,28 @@ function openai_request(api::AbstractString,
 end
 
 function openai_request(api::AbstractString,
-    provider::AbstractOpenAIProvider;
-    method,
-    http_kwargs,
-    streamcallback = nothing,
-    kwargs...)
+        provider::AbstractOpenAIProvider;
+        method,
+        http_kwargs,
+        streamcallback = nothing,
+        kwargs...)
     _request(api, provider; method, http_kwargs, streamcallback = streamcallback, kwargs...)
+end
+
+"""
+    configure_callback!(streamcallback; kwargs...)
+
+Prepare a `StreamCallback` for OpenAI APIs. If `streamcallback` is an IO, Channel,
+or `Function`, a new `StreamCallback` is created with `OpenAIStream` flavor.
+Streaming-related keyword arguments are added to `kwargs`.
+Returns the configured callback and updated keyword arguments.
+"""
+function configure_callback!(streamcallback; kwargs...)
+    cb = streamcallback isa StreamCallback ? streamcallback :
+         StreamCallback(out = streamcallback)
+    isnothing(cb.flavor) && (cb.flavor = OpenAIStream())
+    new_kwargs = (; kwargs..., stream = true, stream_options = (; include_usage = true))
+    return cb, new_kwargs
 end
 
 struct OpenAIResponse{R}
@@ -256,8 +224,8 @@ Retrieve model
 For additional details, visit <https://platform.openai.com/docs/api-reference/models/retrieve>
 """
 function retrieve_model(api_key::String,
-    model_id::String;
-    http_kwargs::NamedTuple = NamedTuple())
+        model_id::String;
+        http_kwargs::NamedTuple = NamedTuple())
     return openai_request("models/$(model_id)",
         api_key;
         method = "GET",
@@ -281,9 +249,9 @@ For more details about the endpoint and additional arguments, visit <https://pla
 - `http_kwargs::NamedTuple=NamedTuple()`: Keyword arguments to pass to HTTP.request (e. g., `http_kwargs=(connection_timeout=2,)` to set a connection timeout of 2 seconds).
 """
 function create_completion(api_key::String,
-    model_id::String;
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        model_id::String;
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("completions",
         api_key;
         method = "POST",
@@ -316,7 +284,7 @@ For more details about the endpoint and additional arguments, visit <https://pla
 ## Example:
 
 ```julia
-julia> CC = create_chat("..........", "gpt-4o-mini", 
+julia> CC = create_chat("..........", "gpt-5-mini", 
     [Dict("role" => "user", "content"=> "What is the OpenAI mission?")]
 );
 
@@ -334,7 +302,7 @@ The response body will reflect the chunked nature of the response, so some reass
 message returned by the API.
 
 ```julia
-julia> CC = create_chat(key, "gpt-4o-mini",
+julia> CC = create_chat(key, "gpt-5-mini",
            [Dict("role" => "user", "content"=> "What continent is New York in? Two word answer.")],
        streamcallback = x->println(Dates.now()));
        2023-03-27T12:34:50.428
@@ -363,11 +331,11 @@ julia> map(r->r["choices"][1]["delta"], CC.response)
 ```
 """
 function create_chat(api_key::String,
-    model_id::String,
-    messages;
-    http_kwargs::NamedTuple = NamedTuple(),
-    streamcallback = nothing,
-    kwargs...)
+        model_id::String,
+        messages;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return openai_request("chat/completions",
         api_key;
         method = "POST",
@@ -378,17 +346,37 @@ function create_chat(api_key::String,
         kwargs...)
 end
 function create_chat(provider::AbstractOpenAIProvider,
-    model_id::String,
-    messages;
-    http_kwargs::NamedTuple = NamedTuple(),
-    streamcallback = nothing,
-    kwargs...)
+        model_id::String,
+        messages;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return openai_request("chat/completions",
         provider;
         method = "POST",
         http_kwargs = http_kwargs,
         model = model_id,
         messages = messages,
+        streamcallback = streamcallback,
+        kwargs...)
+end
+
+"""
+    create_chat(schema, api_key, model, conversation; http_kwargs=NamedTuple(),
+                streamcallback=nothing, kwargs...)
+
+Convenience overload for testing/debugging that forwards to `create_chat` with
+support for `StreamCallback` objects.
+"""
+function create_chat(schema,
+        api_key::AbstractString,
+        model::AbstractString,
+        conversation;
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback::Any = nothing,
+        kwargs...)
+    return create_chat(api_key, model, conversation;
+        http_kwargs = http_kwargs,
         streamcallback = streamcallback,
         kwargs...)
 end
@@ -409,10 +397,10 @@ Create embeddings
         For additional details about the endpoint, visit <https://platform.openai.com/docs/api-reference/embeddings>
         """
 function create_embeddings(api_key::String,
-    input,
-    model_id::String = DEFAULT_EMBEDDING_MODEL_ID;
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        input,
+        model_id::String = DEFAULT_EMBEDDING_MODEL_ID;
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("embeddings",
         api_key;
         method = "POST",
@@ -422,16 +410,16 @@ function create_embeddings(api_key::String,
         kwargs...)
 end
 function create_embeddings(provider::AbstractOpenAIProvider,
-    input;
-    model_id::String = DEFAULT_EMBEDDING_MODEL_ID,   
-    http_kwargs::NamedTuple=NamedTuple(),
-    streamcallback=nothing,
-    kwargs...)
+        input;
+        model_id::String = DEFAULT_EMBEDDING_MODEL_ID,
+        http_kwargs::NamedTuple = NamedTuple(),
+        streamcallback = nothing,
+        kwargs...)
     return OpenAI.openai_request("embeddings",
         provider;
-        method="POST",
-        http_kwargs=http_kwargs,
-        model=model_id,
+        method = "POST",
+        http_kwargs = http_kwargs,
+        model = model_id,
         input,
         kwargs...)
 end
@@ -455,11 +443,11 @@ download like this:
 `download(r.response["data"][begin]["url"], "image.png")`
 """
 function create_images(api_key::String,
-    prompt,
-    n::Integer = 1,
-    size::String = "256x256";
-    http_kwargs::NamedTuple = NamedTuple(),
-    kwargs...)
+        prompt,
+        n::Integer = 1,
+        size::String = "256x256";
+        http_kwargs::NamedTuple = NamedTuple(),
+        kwargs...)
     return openai_request("images/generations",
         api_key;
         method = "POST",
@@ -469,7 +457,6 @@ function create_images(api_key::String,
 end
 
 include("assistants.jl")
-
 
 """
 Create responses
@@ -481,7 +468,7 @@ https://platform.openai.com/docs/api-reference/responses/create
 - `input`: The input text to generate the response(s) for, as String or Dict.
     To get responses for multiple inputs in a single request, pass an array of strings
     or array of token arrays. Each input must not exceed 8192 tokens in length.
-- `model::String`: Model id. Defaults to "gpt-4o-mini".
+- `model::String`: Model id. Defaults to "gpt-5-mini".
 - `kwargs...`: Additional arguments to pass to the API.
     - `tools::Int`: The number of responses to generate for the input. Defaults to 1.
 
@@ -536,17 +523,19 @@ response = create_responses(api_key, "How much wood would a woodchuck chuck?";
 ```
 
 """
-function create_responses(api_key::String, input, model="gpt-4o-mini"; http_kwargs::NamedTuple = NamedTuple(), kwargs...)
-    return openai_request("responses", 
-                            api_key; 
-                            method = "POST", 
-                            input = input, 
-                            model=model, 
-                            http_kwargs = http_kwargs,
-                            kwargs...)
+function create_responses(api_key::String, input, model = "gpt-5-mini";
+        http_kwargs::NamedTuple = NamedTuple(), kwargs...)
+    return openai_request("responses",
+        api_key;
+        method = "POST",
+        input = input,
+        model = model,
+        http_kwargs = http_kwargs,
+        kwargs...)
 end
 
 export OpenAIResponse
+export StreamCallback
 export list_models
 export retrieve_model
 export create_chat

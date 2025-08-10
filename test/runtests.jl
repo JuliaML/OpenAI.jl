@@ -21,6 +21,8 @@ end
 
 @testset "OpenAI.jl" begin
     printstyled(color = :blue, "\n")
+    # Disable SSL verification in CI environments that inject self-signed certificates
+    ENV["JULIA_SSL_NO_VERIFY_HOSTS"] = "*"
     @testset "models" begin
         include("models.jl")
     end
@@ -32,6 +34,9 @@ end
     end
     @testset "embeddings" begin
         include("embeddings.jl")
+    end
+    @testset "streamcallbacks" begin
+        include("streamcallbacks.jl")
     end
     # @testset "assistants" begin
     #     include("assistants.jl")

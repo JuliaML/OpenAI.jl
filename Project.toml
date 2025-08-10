@@ -7,17 +7,20 @@ version = "0.11.0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+StreamCallbacks = "c1b9e933-98a0-46fc-8ea7-3b58b195fb0a"
 
 [compat]
 Dates = "1"
 HTTP = "1"
 JSON3 = "1"
+StreamCallbacks = "0.6"
 julia = "1"
 
 [extras]
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
 
 [targets]
-test = ["JET", "Pkg", "Test"]
+test = ["JET", "Pkg", "Test", "Sockets"]
