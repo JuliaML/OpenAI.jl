@@ -3,7 +3,16 @@ module OpenAI
 using JSON3
 using HTTP
 using Dates
-using StreamCallbacks
+using StreamCallbacks: StreamCallback, OpenAIStream, streamed_request!
+import StreamCallbacks: print_content
+
+"""
+    print_content(f::Function, text::AbstractString; kwargs...)
+
+Allow plain functions to be used as streaming sinks. The provided function will
+receive each processed text chunk.
+"""
+print_content(f::Function, text::AbstractString; kwargs...) = f(text)
 
 abstract type AbstractOpenAIProvider end
 Base.@kwdef struct OpenAIProvider <: AbstractOpenAIProvider
@@ -89,52 +98,8 @@ function request_body(url, method; input, headers, query, kwargs...)
 end
 
 function request_body_live(url; method, input, headers, streamcallback, kwargs...)
-    resp = nothing
-
-    body = sprint() do output
-        resp = HTTP.open("POST", url, headers) do stream
-            body = String(take!(input))
-            write(stream, body)
-
-            HTTP.closewrite(stream)    # indicate we're done writing to the request
-
-            r = HTTP.startread(stream) # start reading the response
-            isdone = false
-
-            while !isdone
-                if eof(stream)
-                    break
-                end
-                # Extract all available messages
-                masterchunk = String(readavailable(stream))
-
-                # Split into subchunks on newlines.
-                # Occasionally, the streaming will append multiple messages together,
-                # and iterating through each line in turn will make sure that
-                # streamingcallback is called on each message in turn.
-                chunks = String.(filter(!isempty, split(masterchunk, "\n")))
-
-                # Iterate through each chunk in turn.
-                for chunk in chunks
-                    if occursin(chunk, "data: [DONE]")  # TODO - maybe don't strip, but instead us a regex in the endswith call
-                        isdone = true
-                        break
-                    end
-
-                    # call the callback (if present) on the latest chunk
-                    if !isnothing(streamcallback)
-                        streamcallback(chunk)
-                    end
-
-                    # append the latest chunk to the body
-                    print(output, chunk)
-                end
-            end
-            HTTP.closeread(stream)
-        end
-    end
-
-    return resp, body
+    resp = streamed_request!(streamcallback, url, headers, input; kwargs...)
+    return resp, resp.body
 end
 
 function status_error(resp, log = nothing)
@@ -151,51 +116,35 @@ function _request(api::AbstractString,
     streamcallback = nothing,
     additional_headers::AbstractVector = Pair{String, String}[],
     kwargs...)
-    # add stream: True to the API call if a stream callback function is passed
+    cb = nothing
     if !isnothing(streamcallback)
-        kwargs = (kwargs..., stream = true)
+        cb, kwargs = configure_callback!(streamcallback; kwargs...)
     end
 
     params = build_params(kwargs)
     url = build_url(provider, api)
-    resp, body = let
-        # Add whatever other headers we were given
-        headers = vcat(auth_header(provider, api_key), additional_headers)
+    headers = vcat(auth_header(provider, api_key), additional_headers)
 
-        if isnothing(streamcallback)
-            request_body(url,
-                method;
-                input = params,
-                headers = headers,
-                query = query,
-                http_kwargs...)
-        else
-            request_body_live(url;
-                method,
-                input = params,
-                headers = headers,
-                query = query,
-                streamcallback = streamcallback,
-                http_kwargs...)
-        end
+    if isnothing(cb)
+        resp, body = request_body(url,
+            method;
+            input = params,
+            headers = headers,
+            query = query,
+            http_kwargs...)
+    else
+        resp, body = request_body_live(url;
+            method,
+            input = params,
+            headers = headers,
+            streamcallback = cb,
+            http_kwargs...)
     end
+
     if resp.status >= 400
         status_error(resp, body)
     else
-        return if isnothing(streamcallback)
-            OpenAIResponse(resp.status, JSON3.read(body))
-        else
-            # Assemble the streaming response body into a proper JSON object
-            lines = split(body, "\n")  # Split body into lines
-
-            # Filter out empty lines and lines that are not JSON (e.g., "event: ...")
-            lines = filter(x -> !isempty(x) && startswith(x, "data: "), lines)
-
-            # Parse each line, removing the "data: " prefix
-            parsed = map(line -> JSON3.read(line[7:end]), lines)
-
-            OpenAIResponse(resp.status, parsed)
-        end
+        return OpenAIResponse(resp.status, JSON3.read(body))
     end
 end
 
@@ -225,15 +174,14 @@ function openai_request(api::AbstractString,
 end
 
 """
-    configure_callback!(streamcallback, schema; kwargs...)
+    configure_callback!(streamcallback; kwargs...)
 
-Configure a streaming callback for OpenAI APIs. If `streamcallback` is an IO or
-Channel, a new `StreamCallback` is created. The callback flavor defaults to
-`OpenAIStream` and streaming-related keyword arguments are appended to
-`kwargs`.
+Prepare a `StreamCallback` for OpenAI APIs. If `streamcallback` is an IO, Channel,
+or `Function`, a new `StreamCallback` is created with `OpenAIStream` flavor.
+Streaming-related keyword arguments are added to `kwargs`.
 Returns the configured callback and updated keyword arguments.
 """
-function configure_callback!(streamcallback, schema; kwargs...)
+function configure_callback!(streamcallback; kwargs...)
     cb = streamcallback isa StreamCallback ? streamcallback : StreamCallback(out = streamcallback)
     isnothing(cb.flavor) && (cb.flavor = OpenAIStream())
     new_kwargs = (; kwargs..., stream = true, stream_options = (; include_usage = true))
@@ -414,35 +362,20 @@ end
     create_chat(schema, api_key, model, conversation; http_kwargs=NamedTuple(),
                 streamcallback=nothing, kwargs...)
 
-Fallback-compatible method that integrates `StreamCallbacks.jl`. When a
-`streamcallback` is provided that is *not* a plain function, the request is
-handled via `StreamCallbacks.streamed_request!` with the callback configured by
-`configure_callback!`.
+Convenience overload for testing/debugging that forwards to `create_chat` with
+support for `StreamCallback` objects.
 """
 function create_chat(schema,
     api_key::AbstractString,
     model::AbstractString,
     conversation;
-    provider = DEFAULT_PROVIDER,
     http_kwargs::NamedTuple = NamedTuple(),
     streamcallback::Any = nothing,
     kwargs...)
-    if !isnothing(streamcallback) && !(streamcallback isa Function)
-        url = build_url(provider, "chat/completions")
-        headers = auth_header(provider, api_key)
-        streamcallback, new_kwargs = configure_callback!(streamcallback, schema; kwargs...)
-        input = build_params((; messages = conversation, model, new_kwargs...))
-        resp = streamed_request!(streamcallback, url, headers, input; http_kwargs...)
-        return OpenAIResponse(resp.status, JSON3.read(resp.body))
-    else
-        return _request("chat/completions", provider, api_key;
-            method = "POST",
-            http_kwargs = http_kwargs,
-            streamcallback = streamcallback,
-            model = model,
-            messages = conversation,
-            kwargs...)
-    end
+    return create_chat(api_key, model, conversation;
+        http_kwargs = http_kwargs,
+        streamcallback = streamcallback,
+        kwargs...)
 end
 
 """
@@ -599,6 +532,7 @@ function create_responses(api_key::String, input, model="gpt-4o-mini"; http_kwar
 end
 
 export OpenAIResponse
+export StreamCallback
 export list_models
 export retrieve_model
 export create_chat

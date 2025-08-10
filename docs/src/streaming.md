@@ -9,7 +9,7 @@ create_chat(secret_key, model, messages; streamcallback=stdout)
 
 ## 2. Capture stream chunks
 ```julia
-using StreamCallbacks
+using OpenAI
 cb = StreamCallback()
 create_chat(secret_key, model, messages; streamcallback=cb)
 cb.chunks
@@ -17,7 +17,7 @@ cb.chunks
 
 ## 3. Customize printing
 ```julia
-using StreamCallbacks
+using OpenAI
 import StreamCallbacks: print_content
 
 function print_content(io::IO, content; kwargs...)
@@ -30,7 +30,8 @@ create_chat(secret_key, model, messages; streamcallback=cb)
 
 For complete control you can overload `StreamCallbacks.callback`:
 ```julia
-using StreamCallbacks: callback, AbstractStreamCallback, AbstractStreamChunk, extract_content, print_content
+using OpenAI
+import StreamCallbacks: callback, AbstractStreamCallback, AbstractStreamChunk, extract_content, print_content
 
 @inline function callback(cb::AbstractStreamCallback, chunk::AbstractStreamChunk; kwargs...)
     processed_text = extract_content(cb.flavor, chunk; kwargs...)

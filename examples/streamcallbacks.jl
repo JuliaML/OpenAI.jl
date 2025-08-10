@@ -1,5 +1,5 @@
 # Streaming examples using StreamCallbacks.jl
-using OpenAI, StreamCallbacks
+using OpenAI
 
 api_key = get(ENV, "OPENAI_API_KEY", "")
 model = "gpt-4o-mini"
