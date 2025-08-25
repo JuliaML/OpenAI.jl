@@ -24,7 +24,7 @@ end
 @testset "chatcompletion - streaming" begin
     cb = StreamCallback()
     r = create_chat(ENV["OPENAI_API_KEY"],
-        "gpt-5-mini",
+        "gpt-4o-mini",
         [
             Dict("role" => "user",
             "content" => "What continent is New York in? Two word answer.")
