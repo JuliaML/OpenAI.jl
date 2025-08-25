@@ -63,14 +63,14 @@ Main.OpenAI.OpenAIResponse{JSON3.Object{Vector{UInt8}, Vector{UInt64}}}(200, {
 """
 
 function create_assistant(api_key::String,
-    model_id::String;
-    name::String = "",
-    description::String = "",
-    instructions::String = "",
-    tools::Vector = [],
-    file_ids::Vector = [],
-    metadata::Dict = Dict(),
-    http_kwargs::NamedTuple = NamedTuple())
+        model_id::String;
+        name::String = "",
+        description::String = "",
+        instructions::String = "",
+        tools::Vector = [],
+        file_ids::Vector = [],
+        metadata::Dict = Dict(),
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/assistants
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -133,8 +133,8 @@ Main.OpenAI.OpenAIResponse{JSON3.Object{Vector{UInt8}, Vector{UInt64}}}(200, {
 ```
 """
 function get_assistant(api_key::String,
-    assistant_id::String;
-    http_kwargs::NamedTuple = NamedTuple())
+        assistant_id::String;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/assistants/:assistant_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -212,18 +212,18 @@ Main.OpenAI.OpenAIResponse{JSON3.Object{Vector{UInt8}, Vector{UInt64}}}(200, {
 ```
 """
 function list_assistants(api_key::AbstractString;
-    limit::Union{Integer, AbstractString} = 20,
-    order::AbstractString = "desc",
-    after::AbstractString = "",
-    before::AbstractString = "",
-    http_kwargs::NamedTuple = NamedTuple())
+        limit::Union{Integer, AbstractString} = 20,
+        order::AbstractString = "desc",
+        after::AbstractString = "",
+        before::AbstractString = "",
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/assistants
     # Requires the OpenAI-Beta: assistants=v1 header
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-        "order" => order]
+    "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
@@ -296,15 +296,15 @@ Main.OpenAI.OpenAIResponse{JSON3.Object{Vector{UInt8}, Vector{UInt64}}}(200, {
 ```
 """
 function modify_assistant(api_key::AbstractString,
-    assistant_id::AbstractString;
-    model = nothing,
-    name = nothing,
-    description = nothing,
-    instructions = nothing,
-    tools = nothing,
-    file_ids = nothing,
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        assistant_id::AbstractString;
+        model = nothing,
+        name = nothing,
+        description = nothing,
+        instructions = nothing,
+        tools = nothing,
+        file_ids = nothing,
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # PATCH https://api.openai.com/v1/assistants/:assistant_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -379,8 +379,8 @@ Main.OpenAI.OpenAIResponse{JSON3.Object{Vector{UInt8}, Vector{UInt64}}}(200, {
 ```
 """
 function delete_assistant(api_key::AbstractString,
-    assistant_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        assistant_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # DELETE https://api.openai.com/v1/assistants/:assistant_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -421,8 +421,8 @@ thread_id = create_thread(api_key, [
 ```
 """
 function create_thread(api_key::AbstractString,
-    messages = nothing;
-    http_kwargs::NamedTuple = NamedTuple())
+        messages = nothing;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -444,8 +444,8 @@ thread = retrieve_thread(api_key, thread_id)
 ```
 """
 function retrieve_thread(api_key::AbstractString,
-    thread_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/threads/:thread_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -466,8 +466,8 @@ delete_thread(api_key, thread_id)
 ```
 """
 function delete_thread(api_key::AbstractString,
-    thread_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # DELETE https://api.openai.com/v1/threads/:thread_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -492,9 +492,9 @@ modify_thread(api_key, thread_id, metadata=Dict("key" => "value"))
 ```
 """
 function modify_thread(api_key::AbstractString,
-    thread_id::AbstractString;
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString;
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # PATCH https://api.openai.com/v1/threads/:thread_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -515,12 +515,12 @@ end
 
 """
 function create_message(api_key::AbstractString,
-    thread_id::AbstractString,
-    # role::AbstractString, # Currently role is always "user"
-    content::AbstractString;
-    file_ids = nothing,
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        # role::AbstractString, # Currently role is always "user"
+        content::AbstractString;
+        file_ids = nothing,
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/:thread_id/messages
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -554,9 +554,9 @@ end
 Retrieves a message by ID.
 """
 function retrieve_message(api_key::AbstractString,
-    thread_id::AbstractString,
-    message_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        message_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/threads/:thread_id/messages/:message_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -572,9 +572,9 @@ end
     
 """
 function delete_message(api_key::AbstractString,
-    thread_id::AbstractString,
-    message_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        message_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # DELETE https://api.openai.com/v1/threads/:thread_id/messages/:message_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -590,10 +590,10 @@ end
 
 """
 function modify_message(api_key::AbstractString,
-    thread_id::AbstractString,
-    message_id::AbstractString;
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        message_id::AbstractString;
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # PATCH https://api.openai.com/v1/threads/:thread_id/messages/:message_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -612,19 +612,19 @@ Returns an `OpenAIResponse` object containing a list of messages,
 sorted by the `created_at` timestamp of the objects.
 """
 function list_messages(api_key::AbstractString,
-    thread_id::AbstractString;
-    limit::Union{Integer, AbstractString} = 20,
-    order::AbstractString = "desc",
-    after::AbstractString = "",
-    before::AbstractString = "",
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString;
+        limit::Union{Integer, AbstractString} = 20,
+        order::AbstractString = "desc",
+        after::AbstractString = "",
+        before::AbstractString = "",
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/threads/:thread_id/messages
     # Requires the OpenAI-Beta: assistants=v1 header
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-        "order" => order]
+    "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
@@ -647,13 +647,13 @@ end
 POST https://api.openai.com/v1/threads/{thread_id}/runs
 """
 function create_run(api_key::AbstractString,
-    thread_id::AbstractString,
-    assistant_id::AbstractString,
-    instructions = nothing;
-    tools = nothing,
-    metadata = nothing,
-    model = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        assistant_id::AbstractString,
+        instructions = nothing;
+        tools = nothing,
+        metadata = nothing,
+        model = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/:thread_id/runs
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -675,9 +675,9 @@ end
 GET https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}
 """
 function retrieve_run(api_key::AbstractString,
-    thread_id::AbstractString,
-    run_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        run_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/threads/:thread_id/runs/:run_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -694,10 +694,10 @@ end
 POST https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}
 """
 function modify_run(api_key::AbstractString,
-    thread_id::AbstractString,
-    run_id::AbstractString;
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        run_id::AbstractString;
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/:thread_id/runs/:run_id
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -715,19 +715,19 @@ end
 GET https://api.openai.com/v1/threads/{thread_id}/runs
 """
 function list_runs(api_key::AbstractString,
-    thread_id::AbstractString;
-    limit::Union{Integer, AbstractString} = 20,
-    order::AbstractString = "desc",
-    after::AbstractString = "",
-    before::AbstractString = "",
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString;
+        limit::Union{Integer, AbstractString} = 20,
+        order::AbstractString = "desc",
+        after::AbstractString = "",
+        before::AbstractString = "",
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # GET https://api.openai.com/v1/threads/:thread_id/runs
     # Requires the OpenAI-Beta: assistants=v1 header
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-        "order" => order]
+    "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
@@ -746,9 +746,9 @@ end
 POST https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}/cancel
 """
 function cancel_run(api_key::AbstractString,
-    thread_id::AbstractString,
-    run_id::AbstractString;
-    http_kwargs::NamedTuple = NamedTuple())
+        thread_id::AbstractString,
+        run_id::AbstractString;
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/:thread_id/runs/:run_id/cancel
     # Requires the OpenAI-Beta: assistants=v1 header
@@ -781,13 +781,13 @@ POST https://api.openai.com/v1/threads/runs
 - `metadata` is a `Dict` representing the metadata for the run.
 """
 function create_thread_and_run(api_key::AbstractString,
-    assistant_id::AbstractString;
-    thread = nothing,
-    model = nothing,
-    instructions = nothing,
-    tools = nothing,
-    metadata = nothing,
-    http_kwargs::NamedTuple = NamedTuple())
+        assistant_id::AbstractString;
+        thread = nothing,
+        model = nothing,
+        instructions = nothing,
+        tools = nothing,
+        metadata = nothing,
+        http_kwargs::NamedTuple = NamedTuple())
     # The API endpoint is
     # POST https://api.openai.com/v1/threads/runs
     # Requires the OpenAI-Beta: assistants=v1 header
