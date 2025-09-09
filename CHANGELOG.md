@@ -1,6 +1,6 @@
 ### 0.12.0
 
-* Add support for image generation and responses endpoints (#72)
+* Integrate StreamCallbacks.jl for streaming (#72)
 
 ### 0.11.0
 
