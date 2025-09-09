@@ -1,3 +1,7 @@
+### 0.12.0
+
+* Add support for image generation and responses endpoints (#72)
+
 ### 0.11.0
 
 * Add support for image generation and responses endpoints (#69)
