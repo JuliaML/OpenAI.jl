@@ -1,6 +1,6 @@
 name = "OpenAI"
 uuid = "e9f21f70-7185-4079-aca2-91159181367c"
-authors = ["Rory Linehan @roryl23"]
+authors = ["Rory Linehan @roryl23", "Marius Fersigan @algunion", "RexWzh @RexWzh", "Thatcher Chamberlin @ThatcherC", "Nicu Stiurca @nstiurca", "Peter @chengchingwen", "Stefan Wojcik @stefanjwojcik", "J S @svilupp", "Logan Kilpatrick @logankilpatrick", "Jerry Ling @Moelf", "Cameron Pfiffer @cpfiffer"]
 version = "0.13.0"
 
 [deps]
