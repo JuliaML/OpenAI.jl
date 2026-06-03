@@ -3,6 +3,7 @@ module OpenAI
 using JSON3
 using HTTP
 using Dates
+import OpenAPI
 using StreamCallbacks: StreamCallback, OpenAIStream, streamed_request!
 import StreamCallbacks: print_content
 
@@ -194,6 +195,47 @@ end
 struct OpenAIResponse{R}
     status::Int16
     response::R
+end
+
+include("generated/OpenAIClient.jl")
+
+function _generated_client_headers(provider::AbstractOpenAIProvider,
+        api_key::AbstractString,
+        headers::Dict{String, String})
+    auth_headers = Dict{String, String}()
+    for (name, value) in auth_header(provider, api_key)
+        lowercase(String(name)) == "content-type" && continue
+        auth_headers[String(name)] = String(value)
+    end
+    return merge(copy(headers), auth_headers)
+end
+
+"""
+    openai_client(provider=DEFAULT_PROVIDER; headers=Dict{String,String}(), kwargs...)
+    openai_client(api_key; base_url="https://api.openai.com/v1", headers=Dict{String,String}(), kwargs...)
+
+Create an authenticated `OpenAPI.Clients.Client` for the generated
+`OpenAIClient` module.
+
+`kwargs` are forwarded to `OpenAPI.Clients.Client`, e.g. `timeout`,
+`long_polling_timeout`, `pre_request_hook`, `verbose`, or `httplib`.
+"""
+function openai_client(provider::AbstractOpenAIProvider = DEFAULT_PROVIDER;
+        api_key::AbstractString = provider.api_key,
+        headers::Dict{String, String} = Dict{String, String}(),
+        kwargs...)
+    return OpenAPI.Clients.Client(provider.base_url;
+        headers = _generated_client_headers(provider, api_key, headers),
+        kwargs...)
+end
+
+function openai_client(api_key::AbstractString;
+        base_url::AbstractString = "https://api.openai.com/v1",
+        headers::Dict{String, String} = Dict{String, String}(),
+        kwargs...)
+    return openai_client(OpenAIProvider(api_key = String(api_key), base_url = String(base_url));
+        headers = headers,
+        kwargs...)
 end
 
 """
@@ -535,7 +577,9 @@ function create_responses(api_key::String, input, model = "gpt-5-mini";
 end
 
 export OpenAIResponse
+export OpenAIClient
 export StreamCallback
+export openai_client
 export list_models
 export retrieve_model
 export create_chat

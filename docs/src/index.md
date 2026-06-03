@@ -24,6 +24,14 @@ create_embeddings(api_key::String, input, model_id::String=DEFAULT_EMBEDDING_MOD
 create_images(api_key::String, prompt, n::Integer=1, size::String="256x256"; http_kwargs::NamedTuple=NamedTuple(), kwargs...)
 ```
 
+## Generated OpenAPI Client
+
+```@docs
+openai_client
+```
+
+The generated module is available as `OpenAI.OpenAIClient`.
+
 ## Streaming
 
 See [Streaming](streaming.md) for examples using StreamCallbacks.

@@ -23,6 +23,9 @@ end
     printstyled(color = :blue, "\n")
     # Disable SSL verification in CI environments that inject self-signed certificates
     ENV["JULIA_SSL_NO_VERIFY_HOSTS"] = "*"
+    @testset "openapi_client" begin
+        include("openapi_client.jl")
+    end
     @testset "models" begin
         include("models.jl")
     end
