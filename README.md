@@ -114,6 +114,28 @@ end
 
 See [`examples/streamcallbacks.jl`](examples/streamcallbacks.jl) for a full walkthrough.
 
+## Generated OpenAPI Client
+
+The package also ships a generated client in `OpenAI.OpenAIClient`, built from
+the upstream OpenAI OpenAPI specification with JuliaComputing's OpenAPI.jl
+runtime. The generated module contains typed request/response models and API
+groups for the full spec, while the existing convenience wrapper functions
+remain available at the top level.
+
+```julia
+using OpenAI
+
+client = openai_client(ENV["OPENAI_API_KEY"])
+models_api = OpenAIClient.ModelsApi(client)
+models, http_response = OpenAIClient.list_models(models_api)
+```
+
+To regenerate after updating `openapi/openapi.yaml`, run:
+
+```bash
+scripts/generate_openapi_client.sh
+```
+
 ## Feature requests
 
 Feel free to open a PR, or file an issue if that's out of reach!
