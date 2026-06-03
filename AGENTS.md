@@ -201,10 +201,17 @@ functions, a docstring plus a short docs page entry may be enough.
 
 ## CI And Formatting
 
-The main CI workflow runs package tests and JuliaFormatter. Before committing
-large generated changes, remember that formatter behavior on generated files can
-be expensive and noisy. If formatting policy changes for generated code, update
-this file and CI together.
+The main CI workflow runs package tests and JuliaFormatter. Run the formatter
+locally before pushing handwritten changes:
+
+```bash
+julia -e 'import Pkg; Pkg.activate(; temp=true); Pkg.add("JuliaFormatter"); using JuliaFormatter; format(".", verbose=true)'
+```
+
+`.JuliaFormatter.toml` ignores `src/generated` and `docs/build`. Do not format
+generated OpenAPI output unless you are intentionally changing generation
+policy. If formatting policy changes for generated code, update this file and
+CI together.
 
 There is a commented JET test block in `test/runtests.jl`. Do not assume JET is
 active unless you re-enable and verify it.
