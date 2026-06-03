@@ -1,3 +1,11 @@
+### 0.13.0
+
+* Add a generated OpenAPI client exposed as `OpenAI.OpenAIClient`, generated from a committed OpenAI OpenAPI specification snapshot (#73)
+* Add `openai_client` for constructing authenticated generated-client instances
+* Add an OpenAPI client regeneration script and mark generated source as generated for GitHub diffs
+* Add generated-client documentation and live smoke coverage
+* Require Julia 1.9 or newer to match current dependency compatibility
+
 ### 0.12.0
 
 * Integrate StreamCallbacks.jl for streaming (#72)
