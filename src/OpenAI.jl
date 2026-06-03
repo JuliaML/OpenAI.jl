@@ -233,7 +233,8 @@ function openai_client(api_key::AbstractString;
         base_url::AbstractString = "https://api.openai.com/v1",
         headers::Dict{String, String} = Dict{String, String}(),
         kwargs...)
-    return openai_client(OpenAIProvider(api_key = String(api_key), base_url = String(base_url));
+    return openai_client(
+        OpenAIProvider(api_key = String(api_key), base_url = String(base_url));
         headers = headers,
         kwargs...)
 end
