@@ -223,7 +223,7 @@ function list_assistants(api_key::AbstractString;
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-    "order" => order]
+        "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
@@ -624,7 +624,7 @@ function list_messages(api_key::AbstractString,
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-    "order" => order]
+        "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
@@ -727,7 +727,7 @@ function list_runs(api_key::AbstractString,
 
     # Build query parameters
     query = Pair{String, String}["limit" => string(limit),
-    "order" => order]
+        "order" => order]
     length(after) > 0 && push!(query, "after" => after)
     length(before) > 0 && push!(query, "before" => before)
 
