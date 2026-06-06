@@ -139,8 +139,3 @@ scripts/generate_openapi_client.sh
 ## Feature requests
 
 Feel free to open a PR, or file an issue if that's out of reach!
-
-# Notes
-
-* The [Assistants API was changed upstream](https://github.com/JuliaML/OpenAI.jl/issues/71),
-  so these functions are currently disabled.
